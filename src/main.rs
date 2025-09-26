@@ -42,6 +42,42 @@ fn split_instructions(instructions: &String) -> Vec<Instruction> {
     result
 }
 
+fn run(instructions: &Vec<Instruction>) {
+    let mut stack: Vec<i32> = Vec::new();
+
+    let mut i = 0;
+    while i < instructions.len() {
+        match instructions[i] {
+            Instruction::Null => {
+                i += 1;
+            }
+            Instruction::Push(value) => {
+                stack.push(value);
+                i += 1;
+            }
+            Instruction::Pop => {
+                if let Some(val) = stack.pop() {
+                    println!("Popped {}", val);
+                } else {
+                    eprintln!("Stack underflow!");
+                }
+                i += 1;
+            }
+            Instruction::Ret => {
+                if let Some(val) = stack.pop() {
+                    println!("program returned with exitcode {}", val)
+                } else {
+                    eprintln!("no value on stack to return");
+                }
+
+                break;
+            }
+        }
+    }
+
+    println!("{:?}", stack);
+}
+
 fn main() {
     // step 0: get command line args
     let args: Vec<String> = env::args().collect();
@@ -58,4 +94,7 @@ fn main() {
     // step 2: split the file into tokens
     let instruction_arr: Vec<Instruction> = split_instructions(&instructions);
     println!("{:?}", instruction_arr);
+
+    // step 3: run the instructions
+    run(&instruction_arr);
 }
