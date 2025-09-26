@@ -6,7 +6,7 @@ vortex-vm is a simple stackbased vm wich executes code(duh).
 
 ## instructions
 
-** instructions are case insensitve **
+**instructions are case insensitve**
 1. null          -         just increases the instruction pointer
 1. push          -         pushes a value to the stack
 1. pop           -         pops a value from the stack
