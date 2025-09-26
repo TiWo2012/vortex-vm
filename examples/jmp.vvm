@@ -1,0 +1,6 @@
+push 0
+push 25
+push 100
+pop
+jnz 3
+ret
