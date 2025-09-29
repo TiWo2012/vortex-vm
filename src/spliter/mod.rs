@@ -7,7 +7,7 @@ pub fn split_instructions(instructions: &String) -> Vec<Instruction> {
         // Trim spaces + Windows `\r`
         let line = line.trim();
 
-        if line.is_empty() {
+        if line.is_empty() || line.starts_with(';') {
             continue; // skip blank lines
         }
 
