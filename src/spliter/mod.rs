@@ -38,6 +38,46 @@ pub fn split_instructions(instructions: &String) -> Vec<Instruction> {
                     }
                 }
             }
+            "ADD" => {
+                if parts.len() == 2 {
+                    if let Ok(val) = parts[1].parse::<i32>() {
+                        result.push(Instruction::Add(val));
+                    }
+                }
+            }
+            "SUB" => {
+                if parts.len() == 2 {
+                    if let Ok(val) = parts[1].parse::<i32>() {
+                        result.push(Instruction::Sub(val));
+                    }
+                }
+            }
+            "DUP" => {
+                result.push(Instruction::Dup);
+            }
+            "SWAP" => {
+                result.push(Instruction::Swap);
+            }
+            "MULTS" => {
+                if parts.len() == 2 {
+                    if let Ok(val) = parts[1].parse::<i32>() {
+                        result.push(Instruction::MultS(val));
+                    }
+                }
+            }
+            "MULT" => {
+                result.push(Instruction::Mult);
+            }
+            "DIVS" => {
+                if parts.len() == 2 {
+                    if let Ok(val) = parts[1].parse::<i32>() {
+                        result.push(Instruction::DivS(val));
+                    }
+                }
+            }
+            "DIV" => {
+                result.push(Instruction::Div);
+            }
             _ => {
                 eprintln!("Unknown instruction: {}", line);
             }

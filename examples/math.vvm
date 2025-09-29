@@ -1,0 +1,5 @@
+push 60
+sub 7
+multS 2
+add 14
+ret

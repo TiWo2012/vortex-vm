@@ -58,6 +58,81 @@ pub fn run(instructions: &[Instruction]) {
                 }
                 i += 1;
             }
+            Instruction::Add(target) => {
+                if let Some(&val) = stack.last() {
+                    if val != 0 {
+                        stack.push(val + target);
+                    }
+                } else {
+                    eprintln!("No value on stack to add (JNZ)");
+                }
+                i += 1;
+            }
+            Instruction::Sub(target) => {
+                if let Some(&val) = stack.last() {
+                    if val != 0 {
+                        stack.push(val - target);
+                    }
+                } else {
+                    eprintln!("No value on stack to add (JNZ)");
+                }
+                i += 1;
+            }
+            Instruction::Dup => {
+                if let Some(&val) = stack.last() {
+                    stack.push(val);
+                } else {
+                    eprintln!("No value on stack to add (JNZ)");
+                }
+                i += 1;
+            }
+            Instruction::Swap => {
+                let a = stack.pop().unwrap();
+                let b = stack.pop().unwrap();
+
+                stack.push(a);
+                stack.push(b);
+
+                i += 1;
+            }
+            Instruction::DivS(target) => {
+                if let Some(&val) = stack.last() {
+                    stack.push(val / target);
+                } else {
+                    eprintln!("No value on stack to divide (DivS)");
+                }
+                i += 1;
+            }
+            Instruction::Div => {
+                let a = stack.pop().unwrap();
+                let b = stack.pop().unwrap();
+                let res = b / a;
+
+                stack.push(b);
+                stack.push(a);
+                stack.push(res);
+
+                i += 1;
+            }
+            Instruction::MultS(target) => {
+                if let Some(&val) = stack.last() {
+                    stack.push(val * target);
+                } else {
+                    eprintln!("No value on stack to divide (DivS)");
+                }
+                i += 1;
+            }
+            Instruction::Mult => {
+                let a = stack.pop().unwrap();
+                let b = stack.pop().unwrap();
+                let res = b * a;
+
+                stack.push(b);
+                stack.push(a);
+                stack.push(res);
+
+                i += 1;
+            }
         }
     }
 

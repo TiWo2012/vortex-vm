@@ -6,4 +6,12 @@ pub enum Instruction {
     Ret,
     Jiz(i32),
     Jnz(i32),
+    Add(i32),
+    Sub(i32),
+    MultS(i32),
+    Mult,
+    DivS(i32),
+    Div,
+    Dup,
+    Swap,
 }
