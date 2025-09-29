@@ -1,6 +1,6 @@
-use crate::Instruction;
+use crate::instruction::Instruction;
 
-pub fn run(instructions: &[Instruction]) {
+fn execute(instructions: &[Instruction]) -> Vec<i32> {
     let mut stack: Vec<i32> = Vec::new();
     let mut i: usize = 0;
 
@@ -11,130 +11,175 @@ pub fn run(instructions: &[Instruction]) {
             }
             Instruction::Push(value) => {
                 stack.push(*value);
-                println!("PUSH {} => {:?}", value, stack);
                 i += 1;
             }
             Instruction::Pop => {
-                if let Some(val) = stack.pop() {
-                    println!("POP {} => {:?}", val, stack);
-                } else {
-                    eprintln!("Stack underflow!");
-                }
+                stack.pop(); // ignore underflow
                 i += 1;
             }
             Instruction::Ret => {
-                if let Some(val) = stack.pop() {
-                    println!("Program returned with exit code {}", val);
-                } else {
-                    eprintln!("No value on stack to return");
-                }
                 break;
             }
             Instruction::Jiz(target) => {
                 if let Some(&val) = stack.last() {
                     if val == 0 {
-                        if *target >= 0 && (*target as usize) < instructions.len() {
+                        if (*target as usize) < instructions.len() {
                             i = *target as usize;
-                            println!("JIZ taken to {}", i);
-                            continue; // don’t do i += 1
+                            continue;
                         } else {
-                            eprintln!("Invalid jump target {}", target);
-                            break;
+                            break; // invalid jump target
                         }
                     }
-                } else {
-                    eprintln!("No value on stack to compare (JIZ)");
                 }
                 i += 1;
             }
             Instruction::Jnz(target) => {
                 if let Some(&val) = stack.last() {
                     if val != 0 {
-                        i = *target as usize;
-                        continue;
+                        if (*target as usize) < instructions.len() {
+                            i = *target as usize;
+                            continue;
+                        } else {
+                            break;
+                        }
                     }
-                } else {
-                    eprintln!("No value on stack to compare (JNZ)");
                 }
                 i += 1;
             }
             Instruction::Add(target) => {
                 if let Some(&val) = stack.last() {
-                    if val != 0 {
-                        stack.push(val + target);
-                    }
-                } else {
-                    eprintln!("No value on stack to add (JNZ)");
+                    stack.push(val + target);
                 }
                 i += 1;
             }
             Instruction::Sub(target) => {
                 if let Some(&val) = stack.last() {
-                    if val != 0 {
-                        stack.push(val - target);
-                    }
-                } else {
-                    eprintln!("No value on stack to add (JNZ)");
+                    stack.push(val - target);
                 }
                 i += 1;
             }
             Instruction::Dup => {
                 if let Some(&val) = stack.last() {
                     stack.push(val);
-                } else {
-                    eprintln!("No value on stack to add (JNZ)");
                 }
                 i += 1;
             }
             Instruction::Swap => {
-                let a = stack.pop().unwrap();
-                let b = stack.pop().unwrap();
-
-                stack.push(a);
-                stack.push(b);
-
+                if stack.len() >= 2 {
+                    let a = stack.pop().unwrap();
+                    let b = stack.pop().unwrap();
+                    stack.push(a);
+                    stack.push(b);
+                }
                 i += 1;
             }
             Instruction::DivS(target) => {
                 if let Some(&val) = stack.last() {
-                    stack.push(val / target);
-                } else {
-                    eprintln!("No value on stack to divide (DivS)");
+                    if *target != 0 {
+                        stack.push(val / target);
+                    }
                 }
                 i += 1;
             }
             Instruction::Div => {
-                let a = stack.pop().unwrap();
-                let b = stack.pop().unwrap();
-                let res = b / a;
-
-                stack.push(b);
-                stack.push(a);
-                stack.push(res);
-
+                if stack.len() >= 2 {
+                    let a = stack.pop().unwrap();
+                    let b = stack.pop().unwrap();
+                    if a != 0 {
+                        let res = b / a;
+                        stack.push(b);
+                        stack.push(a);
+                        stack.push(res);
+                    }
+                }
                 i += 1;
             }
             Instruction::MultS(target) => {
                 if let Some(&val) = stack.last() {
                     stack.push(val * target);
-                } else {
-                    eprintln!("No value on stack to divide (DivS)");
                 }
                 i += 1;
             }
             Instruction::Mult => {
-                let a = stack.pop().unwrap();
-                let b = stack.pop().unwrap();
-                let res = b * a;
-
-                stack.push(b);
-                stack.push(a);
-                stack.push(res);
-
+                if stack.len() >= 2 {
+                    let a = stack.pop().unwrap();
+                    let b = stack.pop().unwrap();
+                    let res = b * a;
+                    stack.push(b);
+                    stack.push(a);
+                    stack.push(res);
+                }
                 i += 1;
             }
         }
     }
 
-    println!("Final stack: {:?}", stack);
+    stack
+}
+
+pub fn run(instructions: &[Instruction]) {
+    let stack = execute(instructions);
+
+    println!("{:?}", stack);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::instruction::Instruction;
+
+    #[test]
+    fn test_push_and_add() {
+        let program = vec![Instruction::Push(5), Instruction::Add(3), Instruction::Ret];
+        let stack = execute(&program);
+        assert_eq!(stack, vec![5, 8]);
+    }
+
+    #[test]
+    fn test_push_pop() {
+        let program = vec![Instruction::Push(10), Instruction::Pop, Instruction::Ret];
+        let stack = execute(&program);
+        assert!(stack.is_empty());
+    }
+
+    #[test]
+    fn test_dup_and_swap() {
+        let program = vec![
+            Instruction::Push(1),
+            Instruction::Push(2),
+            Instruction::Swap,
+            Instruction::Dup,
+            Instruction::Ret,
+        ];
+        let stack = execute(&program);
+        assert_eq!(stack, vec![2, 1, 1]);
+    }
+
+    #[test]
+    fn test_mult_and_div() {
+        let program = vec![
+            Instruction::Push(1),
+            Instruction::Push(25),
+            Instruction::Mult,
+            Instruction::Dup,
+            Instruction::Div,
+            Instruction::Ret,
+        ];
+
+        let stack = execute(&program);
+        assert_eq!(stack, vec![1, 25, 25, 25, 1]);
+    }
+
+    #[test]
+    fn test_mults_and_divs() {
+        let program = vec![
+            Instruction::Push(2),
+            Instruction::MultS(2),
+            Instruction::Dup,
+            Instruction::DivS(2),
+        ];
+
+        let stack = execute(&program);
+        assert_eq!(stack, vec![2, 4, 4, 2]);
+    }
 }
