@@ -39,7 +39,8 @@ All instructions are **case-insensitive**.
 
 ## Example Program  
 
-This simple program calculates `5 * 4` using a loop (repeated addition).  
+This simple program calculates `5 * 4` using a loop (repeated addition). 
+**Note:** the instructions are case-insensitive
 
 ```text
 PUSH 0      ; result = 0
@@ -68,7 +69,7 @@ RET
 Clone the repo and run:  
 
 ```bash
-cargo run -- examples/loop_mult.vx
+cargo run -- examples/loop_mult.vvm
 ```
 
 ---

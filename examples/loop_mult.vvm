@@ -1,0 +1,12 @@
+PUSH 0      ; result = 0
+PUSH 5      ; counter = 5
+
+; loop start (index 2)
+JIZ 7       ; if counter == 0 -> jump to end
+PUSH 4
+ADD 0       ; result = result + 4
+SUB 1       ; counter = counter - 1
+JNZ 2       ; repeat until counter == 0
+
+; end
+RET
