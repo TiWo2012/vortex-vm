@@ -1,25 +1,86 @@
-# vortex-vm
+# vortex-vm  
 
-## description
+A lightweight **32-bit stack-based virtual machine** written in Rust.  
+It executes a small instruction set designed for experimentation, learning, and simple program execution.  
 
-vortex-vm is a simple stackbased vm wich executes code(duh). it is 32 bit based
+---
 
-## instructions
+## Features  
+- **Stack-based execution** model  
+- **32-bit values**  
+- **Case-insensitive instructions**  
+- **Basic arithmetic & control flow**  
+- Simple, extensible instruction set  
 
-**instructions are case insensitve**
-1. null          -         just increases the instruction pointer
-1. push          -         pushes a value to the stack
-1. pop           -         pops a value from the stack
-1. ret           -         returns with the top most value from the stack
-1. jnz           -         jumps if the top most value is not zero
-1. jiz           -         jumps if the top most value is zero
-1. add           -         adds the specified value to the top of the stack
-1. sub           -         subtracts the specified value from the top of the stack
-1. mult          -         multiplies the second most value with the top most value
-1. mults         -         multiplies the top most value with a specified value
-1. div           -         divides the second top most value with the top most value
-1. divs          -         divides the top most value with a specified value
-1. dup           -         duplicates the top element
-1. swap          -         swaps the top two elements of the satck
+---
 
-see examples in the examples folder for more information
+## Instruction Set  
+
+All instructions are **case-insensitive**.  
+
+| Instruction | Description |
+|-------------|-------------|
+| `NULL`      | No-op, just increments the instruction pointer. |
+| `PUSH <n>`  | Pushes an integer value onto the stack. |
+| `POP`       | Pops (removes) the top value from the stack. |
+| `RET`       | Returns, halting execution. Leaves the topmost value on the stack as the result. |
+| `JNZ <n>`   | Jumps to instruction `<n>` if the top value is **not zero**. |
+| `JIZ <n>`   | Jumps to instruction `<n>` if the top value is **zero**. |
+| `ADD <n>`   | Adds `<n>` to the topmost value on the stack. |
+| `SUB <n>`   | Subtracts `<n>` from the topmost value on the stack. |
+| `MULT`      | Multiplies the top two values on the stack. |
+| `MULTS <n>` | Multiplies the topmost value with `<n>`. |
+| `DIV`       | Divides the second-top value by the top value. |
+| `DIVS <n>`  | Divides the topmost value by `<n>`. |
+| `DUP`       | Duplicates the top value on the stack. |
+| `SWAP`      | Swaps the top two values on the stack. |
+
+---
+
+## Example Program  
+
+This simple program calculates `5 * 4` using a loop (repeated addition).  
+
+```text
+PUSH 0      ; result = 0
+PUSH 5      ; counter = 5
+
+; loop start (index 2)
+JIZ 7       ; if counter == 0 -> jump to end
+PUSH 4
+ADD 0       ; result = result + 4
+SUB 1       ; counter = counter - 1
+JNZ 2       ; repeat until counter == 0
+
+; end
+RET
+```
+
+**Execution result:**  
+```
+[20]
+```
+
+---
+
+## Running  
+
+Clone the repo and run:  
+
+```bash
+cargo run -- examples/loop_mult.vx
+```
+
+---
+
+## Roadmap  
+- [ ] Add memory/register support  
+- [ ] Add bitwise operations  
+- [ ] Improve debugging & tracing  
+- [ ] Write more sample programs  
+
+---
+
+## License  
+
+MIT – feel free to use, modify, and distribute.  

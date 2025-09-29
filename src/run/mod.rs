@@ -14,7 +14,7 @@ fn execute(instructions: &[Instruction]) -> Vec<i32> {
                 i += 1;
             }
             Instruction::Pop => {
-                stack.pop(); // ignore underflow
+                stack.pop();
                 i += 1;
             }
             Instruction::Ret => {
@@ -27,7 +27,7 @@ fn execute(instructions: &[Instruction]) -> Vec<i32> {
                             i = *target as usize;
                             continue;
                         } else {
-                            break; // invalid jump target
+                            break;
                         }
                     }
                 }
@@ -46,15 +46,15 @@ fn execute(instructions: &[Instruction]) -> Vec<i32> {
                 }
                 i += 1;
             }
-            Instruction::Add(target) => {
+            Instruction::Add(n) => {
                 if let Some(&val) = stack.last() {
-                    stack.push(val + target);
+                    stack.push(val + n);
                 }
                 i += 1;
             }
-            Instruction::Sub(target) => {
+            Instruction::Sub(n) => {
                 if let Some(&val) = stack.last() {
-                    stack.push(val - target);
+                    stack.push(val - n);
                 }
                 i += 1;
             }
@@ -73,10 +73,10 @@ fn execute(instructions: &[Instruction]) -> Vec<i32> {
                 }
                 i += 1;
             }
-            Instruction::DivS(target) => {
-                if let Some(&val) = stack.last() {
-                    if *target != 0 {
-                        stack.push(val / target);
+            Instruction::DivS(n) => {
+                if let Some(val) = stack.last_mut() {
+                    if *n != 0 {
+                        *val /= n;
                     }
                 }
                 i += 1;
@@ -86,17 +86,14 @@ fn execute(instructions: &[Instruction]) -> Vec<i32> {
                     let a = stack.pop().unwrap();
                     let b = stack.pop().unwrap();
                     if a != 0 {
-                        let res = b / a;
-                        stack.push(b);
-                        stack.push(a);
-                        stack.push(res);
+                        stack.push(b / a);
                     }
                 }
                 i += 1;
             }
-            Instruction::MultS(target) => {
-                if let Some(&val) = stack.last() {
-                    stack.push(val * target);
+            Instruction::MultS(n) => {
+                if let Some(val) = stack.last_mut() {
+                    *val *= n;
                 }
                 i += 1;
             }
@@ -104,10 +101,7 @@ fn execute(instructions: &[Instruction]) -> Vec<i32> {
                 if stack.len() >= 2 {
                     let a = stack.pop().unwrap();
                     let b = stack.pop().unwrap();
-                    let res = b * a;
-                    stack.push(b);
-                    stack.push(a);
-                    stack.push(res);
+                    stack.push(b * a);
                 }
                 i += 1;
             }
@@ -119,7 +113,6 @@ fn execute(instructions: &[Instruction]) -> Vec<i32> {
 
 pub fn run(instructions: &[Instruction]) {
     let stack = execute(instructions);
-
     println!("{:?}", stack);
 }
 
@@ -147,8 +140,8 @@ mod tests {
         let program = vec![
             Instruction::Push(1),
             Instruction::Push(2),
-            Instruction::Swap,
-            Instruction::Dup,
+            Instruction::Swap, // stack: [2,1]
+            Instruction::Dup,  // stack: [2,1,1]
             Instruction::Ret,
         ];
         let stack = execute(&program);
@@ -160,26 +153,25 @@ mod tests {
         let program = vec![
             Instruction::Push(1),
             Instruction::Push(25),
-            Instruction::Mult,
-            Instruction::Dup,
-            Instruction::Div,
+            Instruction::Mult, // [25]
+            Instruction::Dup,  // [25,25]
+            Instruction::Div,  // [1]
             Instruction::Ret,
         ];
-
         let stack = execute(&program);
-        assert_eq!(stack, vec![1, 25, 25, 25, 1]);
+        assert_eq!(stack, vec![1]);
     }
 
     #[test]
     fn test_mults_and_divs() {
         let program = vec![
             Instruction::Push(2),
-            Instruction::MultS(2),
-            Instruction::Dup,
-            Instruction::DivS(2),
+            Instruction::MultS(2), // [4]
+            Instruction::Dup,      // [4,4]
+            Instruction::DivS(2),  // [4,2]
+            Instruction::Ret,
         ];
-
         let stack = execute(&program);
-        assert_eq!(stack, vec![2, 4, 4, 2]);
+        assert_eq!(stack, vec![4, 2]);
     }
 }
