@@ -1,9 +1,9 @@
-use std::option;
-
 use crate::instruction::Instruction;
+use std::io::Write;
 
-fn execute(instructions: &[Instruction]) -> Vec<i32> {
+pub fn execute(instructions: &[Instruction], output_buffer: &mut Vec<u8>) -> (Vec<i32>, Vec<i32>) {
     let mut stack: Vec<i32> = Vec::new();
+    let mut mem: Vec<i32> = vec![0; 2048];
     let mut i: usize = 0;
 
     while i < instructions.len() {
@@ -55,10 +55,12 @@ fn execute(instructions: &[Instruction]) -> Vec<i32> {
                 i += 1;
             }
             Instruction::Add => {
-                let a = stack.pop().unwrap();
-                let b = stack.pop().unwrap();
-
-                stack.push(b + a);
+                if stack.len() >= 2 {
+                    let a = stack.pop().unwrap();
+                    let b = stack.pop().unwrap();
+                    stack.push(b + a);
+                }
+                i += 1;
             }
             Instruction::SubS(n) => {
                 if let Some(val) = stack.pop() {
@@ -67,10 +69,12 @@ fn execute(instructions: &[Instruction]) -> Vec<i32> {
                 i += 1;
             }
             Instruction::Sub => {
-                let a = stack.pop().unwrap();
-                let b = stack.pop().unwrap();
-
-                stack.push(b - a);
+                if stack.len() >= 2 {
+                    let a = stack.pop().unwrap();
+                    let b = stack.pop().unwrap();
+                    stack.push(b - a);
+                }
+                i += 1;
             }
             Instruction::Dup => {
                 if let Some(&val) = stack.last() {
@@ -119,14 +123,37 @@ fn execute(instructions: &[Instruction]) -> Vec<i32> {
                 }
                 i += 1;
             }
+            Instruction::MemWrite(start_addr, values) => {
+                if *start_addr < 2048 {
+                    for j in 0..values.len() {
+                        if (*start_addr as usize + j) < mem.len() {
+                            mem[*start_addr as usize + j] = values[j];
+                        }
+                    }
+                }
+                i += 1;
+            }
+            Instruction::Print(start_addr, length) => {
+                let start = *start_addr as usize;
+                let end = start + *length as usize;
+                if end <= mem.len() {
+                    for idx in start..end {
+                        write!(output_buffer, "{}", mem[idx] as u8 as char).unwrap();
+                    }
+                } else {
+                    eprintln!("Print out of bounds: {}..{}", start, end);
+                }
+                i += 1;
+            }
         }
     }
 
-    stack
+    (stack, mem)
 }
 
 pub fn run(instructions: &[Instruction]) {
-    let stack = execute(instructions);
+    let mut output = Vec::new();
+    let stack = execute(instructions, &mut output);
     println!("{:?}", stack);
 }
 
@@ -138,14 +165,16 @@ mod tests {
     #[test]
     fn test_push_and_add() {
         let program = vec![Instruction::Push(5), Instruction::AddS(3), Instruction::Ret];
-        let stack = execute(&program);
+        let mut output = Vec::new();
+        let (stack, _) = execute(&program, &mut output);
         assert_eq!(stack, vec![8]);
     }
 
     #[test]
     fn test_push_pop() {
         let program = vec![Instruction::Push(10), Instruction::Pop, Instruction::Ret];
-        let stack = execute(&program);
+        let mut output = Vec::new();
+        let (stack, _) = execute(&program, &mut output);
         assert!(stack.is_empty());
     }
 
@@ -158,7 +187,8 @@ mod tests {
             Instruction::Dup,  // stack: [2,1,1]
             Instruction::Ret,
         ];
-        let stack = execute(&program);
+        let mut output = Vec::new();
+        let (stack, _) = execute(&program, &mut output);
         assert_eq!(stack, vec![2, 1, 1]);
     }
 
@@ -172,7 +202,8 @@ mod tests {
             Instruction::Div,  // [1]
             Instruction::Ret,
         ];
-        let stack = execute(&program);
+        let mut output = Vec::new();
+        let (stack, _) = execute(&program, &mut output);
         assert_eq!(stack, vec![1]);
     }
 
@@ -185,7 +216,8 @@ mod tests {
             Instruction::DivS(2),  // [4,2]
             Instruction::Ret,
         ];
-        let stack = execute(&program);
+        let mut output = Vec::new();
+        let (stack, _) = execute(&program, &mut output);
         assert_eq!(stack, vec![4, 2]);
     }
 
@@ -197,7 +229,41 @@ mod tests {
             Instruction::Jnz(1),
             Instruction::Ret,
         ];
-        let stack = execute(&program);
+        let mut output = Vec::new();
+        let (stack, _) = execute(&program, &mut output);
         assert_eq!(stack, vec![0]);
+    }
+
+    #[test]
+    fn test_mem_write() {
+        let program = vec![
+            Instruction::Push(0),
+            Instruction::MemWrite(0, vec![1, 1, 1, 1]),
+            Instruction::Ret,
+        ];
+        let mut output = Vec::new();
+        let (stack, mem) = execute(&program, &mut output);
+        let predicted_stack = vec![0];
+        let mut predicted_mem = vec![0; 2048];
+        predicted_mem[0] = 1;
+        predicted_mem[1] = 1;
+        predicted_mem[2] = 1;
+        predicted_mem[3] = 1;
+
+        assert_eq!(stack, predicted_stack);
+        assert_eq!(mem, predicted_mem);
+    }
+
+    #[test]
+    fn test_print() {
+        let program = vec![
+            Instruction::MemWrite(0, vec![72, 101, 108, 108, 111, 33]), // "Hello!"
+            Instruction::Print(0, 6),
+            Instruction::Ret,
+        ];
+        let mut output = Vec::new();
+        let (_stack, _mem) = execute(&program, &mut output);
+        let printed = String::from_utf8(output).unwrap();
+        assert_eq!(printed, "Hello!");
     }
 }

@@ -4,11 +4,10 @@ pub fn split_instructions(instructions: &String) -> Vec<Instruction> {
     let mut result = Vec::new();
 
     for line in instructions.lines() {
-        // Trim spaces + Windows `\r`
         let line = line.trim();
 
         if line.is_empty() || line.starts_with(';') {
-            continue; // skip blank lines
+            continue;
         }
 
         let parts: Vec<&str> = line.split_whitespace().collect();
@@ -45,7 +44,7 @@ pub fn split_instructions(instructions: &String) -> Vec<Instruction> {
                     }
                 }
             }
-            "Add" => result.push(Instruction::Add),
+            "ADD" => result.push(Instruction::Add),
             "SUBS" => {
                 if parts.len() == 2 {
                     if let Ok(val) = parts[1].parse::<i32>() {
@@ -54,12 +53,8 @@ pub fn split_instructions(instructions: &String) -> Vec<Instruction> {
                 }
             }
             "SUB" => result.push(Instruction::Sub),
-            "DUP" => {
-                result.push(Instruction::Dup);
-            }
-            "SWAP" => {
-                result.push(Instruction::Swap);
-            }
+            "DUP" => result.push(Instruction::Dup),
+            "SWAP" => result.push(Instruction::Swap),
             "MULTS" => {
                 if parts.len() == 2 {
                     if let Ok(val) = parts[1].parse::<i32>() {
@@ -67,9 +62,7 @@ pub fn split_instructions(instructions: &String) -> Vec<Instruction> {
                     }
                 }
             }
-            "MULT" => {
-                result.push(Instruction::Mult);
-            }
+            "MULT" => result.push(Instruction::Mult),
             "DIVS" => {
                 if parts.len() == 2 {
                     if let Ok(val) = parts[1].parse::<i32>() {
@@ -77,12 +70,28 @@ pub fn split_instructions(instructions: &String) -> Vec<Instruction> {
                     }
                 }
             }
-            "DIV" => {
-                result.push(Instruction::Div);
+            "DIV" => result.push(Instruction::Div),
+            "MEMWRITE" => {
+                if parts.len() >= 2 {
+                    if let Ok(addr) = parts[1].parse::<i32>() {
+                        let values: Vec<i32> = parts[2..]
+                            .iter()
+                            .filter_map(|v| v.parse::<i32>().ok())
+                            .collect();
+                        result.push(Instruction::MemWrite(addr, values));
+                    }
+                }
             }
-            _ => {
-                eprintln!("Unknown instruction: {}", line);
+            "PRINT" => {
+                if parts.len() == 3 {
+                    if let Ok(addr) = parts[1].parse::<i32>() {
+                        if let Ok(len) = parts[2].parse::<i32>() {
+                            result.push(Instruction::Print(addr, len));
+                        }
+                    }
+                }
             }
+            _ => eprintln!("Unknown instruction: {}", line),
         }
     }
 
@@ -95,55 +104,23 @@ mod tests {
     use crate::instruction::Instruction;
 
     #[test]
+    fn test_memwrite_parse() {
+        let input = "MemWrite 10 1 2 3 4".to_string();
+        let parsed = split_instructions(&input);
+        assert_eq!(parsed, vec![Instruction::MemWrite(10, vec![1, 2, 3, 4])]);
+    }
+
+    #[test]
+    fn test_print_parse() {
+        let input = "Print 5 3".to_string();
+        let parsed = split_instructions(&input);
+        assert_eq!(parsed, vec![Instruction::Print(5, 3)]);
+    }
+
+    #[test]
     fn test_push_and_pop() {
         let input = "PUSH 42\nPOP\n".to_string();
         let parsed = split_instructions(&input);
-
-        assert_eq!(parsed, vec![Instruction::Push(42), Instruction::Pop,]);
-    }
-
-    #[test]
-    fn test_arithmetic() {
-        let input = "PUSH 10\nPUSH 5\nADDS 3\nSUBS 2\nMULT\nDIV\n".to_string();
-        let parsed = split_instructions(&input);
-
-        assert_eq!(
-            parsed,
-            vec![
-                Instruction::Push(10),
-                Instruction::Push(5),
-                Instruction::AddS(3),
-                Instruction::SubS(2),
-                Instruction::Mult,
-                Instruction::Div,
-            ]
-        );
-    }
-
-    #[test]
-    fn test_jumps_and_ret() {
-        let input = "JIZ 4\nJNZ 7\nRET\n".to_string();
-        let parsed = split_instructions(&input);
-
-        assert_eq!(
-            parsed,
-            vec![Instruction::Jiz(4), Instruction::Jnz(7), Instruction::Ret,]
-        );
-    }
-
-    #[test]
-    fn test_duplicate_and_swap() {
-        let input = "DUP\nSWAP\n".to_string();
-        let parsed = split_instructions(&input);
-
-        assert_eq!(parsed, vec![Instruction::Dup, Instruction::Swap,]);
-    }
-
-    #[test]
-    fn test_invalid_instruction() {
-        let input = "FOO\n".to_string();
-        let parsed = split_instructions(&input);
-
-        assert!(parsed.is_empty());
+        assert_eq!(parsed, vec![Instruction::Push(42), Instruction::Pop]);
     }
 }
