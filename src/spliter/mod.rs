@@ -38,20 +38,22 @@ pub fn split_instructions(instructions: &String) -> Vec<Instruction> {
                     }
                 }
             }
-            "ADD" => {
+            "ADDS" => {
                 if parts.len() == 2 {
                     if let Ok(val) = parts[1].parse::<i32>() {
-                        result.push(Instruction::Add(val));
+                        result.push(Instruction::AddS(val));
                     }
                 }
             }
-            "SUB" => {
+            "Add" => result.push(Instruction::Add),
+            "SUBS" => {
                 if parts.len() == 2 {
                     if let Ok(val) = parts[1].parse::<i32>() {
-                        result.push(Instruction::Sub(val));
+                        result.push(Instruction::SubS(val));
                     }
                 }
             }
+            "SUB" => result.push(Instruction::Sub),
             "DUP" => {
                 result.push(Instruction::Dup);
             }
@@ -102,7 +104,7 @@ mod tests {
 
     #[test]
     fn test_arithmetic() {
-        let input = "PUSH 10\nPUSH 5\nADD 3\nSUB 2\nMULT\nDIV\n".to_string();
+        let input = "PUSH 10\nPUSH 5\nADDS 3\nSUBS 2\nMULT\nDIV\n".to_string();
         let parsed = split_instructions(&input);
 
         assert_eq!(
@@ -110,8 +112,8 @@ mod tests {
             vec![
                 Instruction::Push(10),
                 Instruction::Push(5),
-                Instruction::Add(3),
-                Instruction::Sub(2),
+                Instruction::AddS(3),
+                Instruction::SubS(2),
                 Instruction::Mult,
                 Instruction::Div,
             ]

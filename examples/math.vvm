@@ -1,5 +1,5 @@
 push 60
-sub 7
-multS 2
-add 14
+subs 7
+mults 2
+adds 14
 ret

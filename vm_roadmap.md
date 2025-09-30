@@ -15,34 +15,31 @@ Build a stack-based VM in Rust that can:
   - `ip: usize` (instruction pointer)
   - `program: Vec<Instruction>`
 - [x] Implement `run()` loop until `Ret` or program end.
-- [ ] Add error handling (`Result<(), VMError>`).
 
 ---
 
 ## 📦 Phase 2 — Stack Operations
-- [ ] Implement `Push(i32)` (push immediate values).
-- [ ] Implement `Pop` (pop top value).
-- [ ] Implement `Dup` (duplicate top).
-- [ ] Implement `Swap` (swap top 2).
-- [ ] Add a `Peek` helper function (not an instruction, just internal).
-- [ ] Unit tests for all of the above.
+- [x] Implement `Push(i32)` (push immediate values).
+- [x] Implement `Pop` (pop top value).
+- [x] Implement `Dup` (duplicate top).
+- [x] Implement `Swap` (swap top 2).
+- [x] Unit tests for all of the above.
 
 ---
 
 ## ➕ Phase 3 — Arithmetic
-- [ ] Implement **immediate forms**: `Add(i32)`, `Sub(i32)`, `MultS(i32)`, `DivS(i32)` → pop top, apply with given operand, push result.
-- [ ] Implement **stack forms**: `Add`, `Sub`, `Mult`, `Div` → pop top 2 values, apply, push result.
-- [ ] Handle division by zero safely.
-- [ ] Unit tests: simple arithmetic programs.
+- [x] Implement **immediate forms**: `Add(i32)`, `Sub(i32)`, `MultS(i32)`, `DivS(i32)` → pop top, apply with given operand, push result.
+- [x] Implement **stack forms**: `Add`, `Sub`, `Mult`, `Div` → pop top 2 values, apply, push result.
+- [x] Handle division by zero safely.
+- [x] Unit tests: simple arithmetic programs.
 
 ---
 
 ## 🔁 Phase 4 — Control Flow
-- [ ] Implement `Jiz(i32)` (jump if zero) → pop top, if 0 then jump.
-- [ ] Implement `Jnz(i32)` (jump if not zero).
-- [ ] Implement `Ret` (terminate program).
-- [ ] Add support for relative vs. absolute jumps (decide your convention).
-- [ ] Test small loop programs (`while x != 0 { x -= 1 }`).
+- [x] Implement `Jiz(i32)` (jump if zero) → pop top, if 0 then jump.
+- [x] Implement `Jnz(i32)` (jump if not zero).
+- [x] Implement `Ret` (terminate program).
+- [x] Test small loop programs (`while x != 0 { x -= 1 }`).
 
 ---
 

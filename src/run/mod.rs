@@ -1,3 +1,5 @@
+use std::option;
+
 use crate::instruction::Instruction;
 
 fn execute(instructions: &[Instruction]) -> Vec<i32> {
@@ -46,17 +48,29 @@ fn execute(instructions: &[Instruction]) -> Vec<i32> {
                 }
                 i += 1;
             }
-            Instruction::Add(n) => {
-                if let Some(&val) = stack.last() {
+            Instruction::AddS(n) => {
+                if let Some(val) = stack.pop() {
                     stack.push(val + n);
                 }
                 i += 1;
             }
-            Instruction::Sub(n) => {
-                if let Some(&val) = stack.last() {
+            Instruction::Add => {
+                let a = stack.pop().unwrap();
+                let b = stack.pop().unwrap();
+
+                stack.push(b + a);
+            }
+            Instruction::SubS(n) => {
+                if let Some(val) = stack.pop() {
                     stack.push(val - n);
                 }
                 i += 1;
+            }
+            Instruction::Sub => {
+                let a = stack.pop().unwrap();
+                let b = stack.pop().unwrap();
+
+                stack.push(b - a);
             }
             Instruction::Dup => {
                 if let Some(&val) = stack.last() {
@@ -123,9 +137,9 @@ mod tests {
 
     #[test]
     fn test_push_and_add() {
-        let program = vec![Instruction::Push(5), Instruction::Add(3), Instruction::Ret];
+        let program = vec![Instruction::Push(5), Instruction::AddS(3), Instruction::Ret];
         let stack = execute(&program);
-        assert_eq!(stack, vec![5, 8]);
+        assert_eq!(stack, vec![8]);
     }
 
     #[test]
@@ -173,5 +187,17 @@ mod tests {
         ];
         let stack = execute(&program);
         assert_eq!(stack, vec![4, 2]);
+    }
+
+    #[test]
+    fn test_loop_program() {
+        let program = vec![
+            Instruction::Push(5),
+            Instruction::SubS(1),
+            Instruction::Jnz(1),
+            Instruction::Ret,
+        ];
+        let stack = execute(&program);
+        assert_eq!(stack, vec![0]);
     }
 }
