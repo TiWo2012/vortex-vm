@@ -5,7 +5,7 @@ mod run;
 use run::run;
 
 mod instruction;
-use crate::instruction::Instruction;
+use instruction::Instruction;
 
 mod spliter;
 use spliter::split_instructions;
