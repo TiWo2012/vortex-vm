@@ -75,11 +75,8 @@ cargo run -- examples/loop_mult.vvm
 ---
 
 ## Roadmap  
-- [ ] Add memory/register support  
-- [ ] Add bitwise operations  
-- [ ] Improve debugging & tracing  
-- [ ] Write more sample programs  
 
+[Roadmap](./vm_roadmap.md)
 ---
 
 ## License  

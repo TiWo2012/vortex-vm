@@ -1,0 +1,60 @@
+# Roadmap for Stack-Based VM in Rust
+
+## 🎯 Goal (v1)
+Build a stack-based VM in Rust that can:
+- Perform arithmetic (`Add`, `Sub`, `Mult`, `Div`)
+- Manipulate the stack (`Push`, `Pop`, `Dup`, `Swap`)
+- Control execution (`Jiz`, `Jnz`, `Ret`)
+- Support both “immediate” and “stack” versions of math ops (`Add(i32)` vs. `Add` using stack).
+
+---
+
+## 🛠️ Phase 1 — Core VM Engine
+- [x] Define the `VM` struct with:
+  - `stack: Vec<i32>`
+  - `ip: usize` (instruction pointer)
+  - `program: Vec<Instruction>`
+- [x] Implement `run()` loop until `Ret` or program end.
+- [ ] Add error handling (`Result<(), VMError>`).
+
+---
+
+## 📦 Phase 2 — Stack Operations
+- [ ] Implement `Push(i32)` (push immediate values).
+- [ ] Implement `Pop` (pop top value).
+- [ ] Implement `Dup` (duplicate top).
+- [ ] Implement `Swap` (swap top 2).
+- [ ] Add a `Peek` helper function (not an instruction, just internal).
+- [ ] Unit tests for all of the above.
+
+---
+
+## ➕ Phase 3 — Arithmetic
+- [ ] Implement **immediate forms**: `Add(i32)`, `Sub(i32)`, `MultS(i32)`, `DivS(i32)` → pop top, apply with given operand, push result.
+- [ ] Implement **stack forms**: `Add`, `Sub`, `Mult`, `Div` → pop top 2 values, apply, push result.
+- [ ] Handle division by zero safely.
+- [ ] Unit tests: simple arithmetic programs.
+
+---
+
+## 🔁 Phase 4 — Control Flow
+- [ ] Implement `Jiz(i32)` (jump if zero) → pop top, if 0 then jump.
+- [ ] Implement `Jnz(i32)` (jump if not zero).
+- [ ] Implement `Ret` (terminate program).
+- [ ] Add support for relative vs. absolute jumps (decide your convention).
+- [ ] Test small loop programs (`while x != 0 { x -= 1 }`).
+
+---
+
+## 🖨️ Phase 5 — Output / Debugging
+- [ ] Temporary `Print` function (not an instruction, just for debugging).
+- [ ] Add a “trace mode”: before each `step()`, print `ip`, current instr, stack.
+- [ ] Write a few end-to-end examples (factorial, sum of numbers).
+
+---
+
+## 🚀 Phase 6 — Extras (Optional)
+- [ ] Labels in source code (`:loop` → resolved to instruction index).
+- [ ] Simple assembler: take a text file (`PUSH 5; PUSH 3; ADD`) → `Vec<Instruction>`.
+- [ ] Functions (`Call`, `Ret` with call stack).
+- [ ] Extended types (bools, strings).
