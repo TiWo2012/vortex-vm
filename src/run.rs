@@ -25,11 +25,13 @@ pub fn execute(instructions: &[Instruction], output_buffer: &mut Vec<u8>) -> (Ve
             Instruction::Jiz(target) => {
                 if let Some(&val) = stack.last() {
                     if val == 0 {
-                        if (*target as usize) < instructions.len() {
-                            i = *target as usize;
-                            continue;
-                        } else {
-                            break;
+                        if let Ok(addr) = target.parse::<usize>() {
+                            if addr < instructions.len() {
+                                i = addr;
+                                continue;
+                            } else {
+                                break;
+                            }
                         }
                     }
                 }
@@ -38,11 +40,13 @@ pub fn execute(instructions: &[Instruction], output_buffer: &mut Vec<u8>) -> (Ve
             Instruction::Jnz(target) => {
                 if let Some(&val) = stack.last() {
                     if val != 0 {
-                        if (*target as usize) < instructions.len() {
-                            i = *target as usize;
-                            continue;
-                        } else {
-                            break;
+                        if let Ok(addr) = target.parse::<usize>() {
+                            if addr < instructions.len() {
+                                i = addr;
+                                continue;
+                            } else {
+                                break;
+                            }
                         }
                     }
                 }
@@ -280,7 +284,7 @@ mod tests {
         let program = vec![
             Instruction::Push(5),
             Instruction::SubS(1),
-            Instruction::Jnz(1),
+            Instruction::Jnz("1".to_string()),
             Instruction::Ret,
         ];
         let mut output = Vec::new();

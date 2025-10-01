@@ -4,3 +4,7 @@ version = "0.2.0"
 edition = "2024"
 
 [dependencies]
+
+[[test]]
+name = "integration_tests"
+path = "test/integration_tests.rs"

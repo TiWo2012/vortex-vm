@@ -2,7 +2,7 @@ use std::env;
 use std::fs;
 
 mod run;
-use run::run;
+use run::execute;
 
 mod instruction;
 use instruction::Instruction;
@@ -28,5 +28,14 @@ fn main() {
     println!("{:?}", instruction_arr);
 
     // step 3: run the instructions
-    run(&instruction_arr);
+    let mut output_buffer = Vec::new();
+    let (stack, _mem) = execute(&instruction_arr, &mut output_buffer);
+
+    // Print any output from Print instructions
+    if !output_buffer.is_empty() {
+        let output = String::from_utf8_lossy(&output_buffer);
+        print!("{}", output);
+    }
+
+    println!("Final stack: {:?}", stack);
 }
