@@ -1,0 +1,23 @@
+; String manipulation example
+; Creates a greeting and manipulates memory
+
+main:
+    ; Write "Hello " to memory at position 0
+    MemWrite 0 72 101 108 108 111 32
+
+    ; Write "World!" to memory at position 6
+    MemWrite 6 87 111 114 108 100 33
+
+    ; Print the complete message (12 characters)
+    Print 0 12
+
+    ; Now manipulate the string - change "Hello" to "Hi"
+    MemWrite 0 72 105 33  ; "Hi!"
+
+    ; Print the modified string (first 4 characters)
+    Print 0 4
+
+    ; Print exclamation mark
+    Print 6 1
+
+    Ret

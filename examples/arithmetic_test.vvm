@@ -1,0 +1,24 @@
+; Arithmetic operations test
+; Tests all arithmetic instructions with labels
+
+main:
+    Push 10
+    Push 3
+    Add         ; 10 + 3 = 13
+
+    Push 2
+    Mult        ; 13 * 2 = 26
+
+    Push 5
+    Sub         ; 26 - 5 = 21
+
+    Push 3
+    Div         ; 21 / 3 = 7
+
+    ; Test immediate operations
+    AddS 3      ; 7 + 3 = 10
+    SubS 2      ; 10 - 2 = 8
+    MultS 3     ; 8 * 3 = 24
+    DivS 2      ; 24 / 2 = 12
+
+    Ret

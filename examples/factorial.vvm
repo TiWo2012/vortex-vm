@@ -1,0 +1,24 @@
+; Factorial calculation using labels
+; Calculates 5! (5*4*3*2*1 = 120)
+
+main:
+    Push 5          ; Push number to calculate factorial of
+    Push 1          ; Push accumulator (result)
+
+factorial_loop:
+    Dup             ; Duplicate the number
+    Jiz end_factorial   ; If number is 0, we're done
+
+    ; Multiply accumulator by current number
+    Swap            ; Get accumulator on top
+    Mult            ; Multiply
+    Swap            ; Put result back as accumulator
+
+    ; Decrement the number
+    Swap            ; Get number back on top
+    SubS 1          ; Decrement
+    Jnz factorial_loop  ; Continue if not zero
+
+end_factorial:
+    Pop             ; Remove the final number (should be 0)
+    Ret             ; Return with result in accumulator
