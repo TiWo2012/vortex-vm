@@ -8,8 +8,8 @@ pub enum Instruction {
     Pop,
     Ret,
 
-    Jiz(i32),
-    Jnz(i32),
+    Jiz(String),
+    Jnz(String),
 
     AddS(i32),
     Add,

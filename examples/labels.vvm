@@ -1,0 +1,21 @@
+; Example program demonstrating labels in Vortex VM assembly
+; This program prints "Hello World!" using labels
+
+main:
+    ; Write "Hello World!" to memory starting at address 0
+    MemWrite 0 72 101 108 108 111 32 87 111 114 108 100 33
+
+    ; Print the message (12 characters)
+    Print 0 12
+
+    ; Return from program
+    Ret
+
+; Alternative loop example
+loop_example:
+    Push 5
+
+subtract_loop:
+    SubS 1
+    Jnz subtract_loop
+    Ret

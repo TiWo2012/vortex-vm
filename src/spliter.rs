@@ -1,12 +1,39 @@
 use crate::instruction::Instruction;
+use std::collections::HashMap;
 
 pub fn split_instructions(instructions: &String) -> Vec<Instruction> {
     let mut result = Vec::new();
+    let mut labels: HashMap<String, usize> = HashMap::new();
 
+    // First pass: collect all labels and their positions
+    let mut instruction_index = 0;
     for line in instructions.lines() {
         let line = line.trim();
 
         if line.is_empty() || line.starts_with(';') {
+            continue;
+        }
+
+        if line.ends_with(':') {
+            // This is a label definition
+            let label_name = line.strip_suffix(':').unwrap().trim().to_string();
+            labels.insert(label_name, instruction_index);
+        } else {
+            // This is an instruction, count it
+            instruction_index += 1;
+        }
+    }
+
+    // Second pass: parse instructions and resolve labels
+    for line in instructions.lines() {
+        let line = line.trim();
+
+        if line.is_empty() || line.starts_with(';') {
+            continue;
+        }
+
+        if line.ends_with(':') {
+            // Skip label definitions in second pass
             continue;
         }
 
@@ -25,16 +52,14 @@ pub fn split_instructions(instructions: &String) -> Vec<Instruction> {
             "RET" => result.push(Instruction::Ret),
             "JIZ" => {
                 if parts.len() == 2 {
-                    if let Ok(val) = parts[1].parse::<i32>() {
-                        result.push(Instruction::Jiz(val));
-                    }
+                    let target = parts[1].to_string();
+                    result.push(Instruction::Jiz(target));
                 }
             }
             "JNZ" => {
                 if parts.len() == 2 {
-                    if let Ok(val) = parts[1].parse::<i32>() {
-                        result.push(Instruction::Jnz(val));
-                    }
+                    let target = parts[1].to_string();
+                    result.push(Instruction::Jnz(target));
                 }
             }
             "ADDS" => {
@@ -108,6 +133,23 @@ pub fn split_instructions(instructions: &String) -> Vec<Instruction> {
                 }
             }
             _ => eprintln!("Unknown instruction: {}", line),
+        }
+    }
+
+    // Now resolve all label references to instruction indices
+    for instruction in &mut result {
+        match instruction {
+            Instruction::Jiz(target) | Instruction::Jnz(target) => {
+                if let Some(&address) = labels.get(target) {
+                    *target = address.to_string();
+                } else if let Ok(address) = target.parse::<usize>() {
+                    // It's already a numeric address, keep it as string
+                    *target = address.to_string();
+                } else {
+                    eprintln!("Unknown label or invalid address: {}", target);
+                }
+            }
+            _ => {}
         }
     }
 
