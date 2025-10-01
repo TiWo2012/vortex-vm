@@ -21,6 +21,7 @@ pub enum Instruction {
     Div,
 
     MemWrite(i32, Vec<i32>),
+    MemWriteS(i32, i32),
     MemRead(i32),
     Print(i32, i32),
 }

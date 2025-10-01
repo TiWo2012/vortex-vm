@@ -98,6 +98,15 @@ pub fn split_instructions(instructions: &String) -> Vec<Instruction> {
                     }
                 }
             }
+            "MEMWRITES" => {
+                if parts.len() == 3 {
+                    if let Ok(addr) = parts[1].parse::<i32>() {
+                        if let Ok(len) = parts[2].parse::<i32>() {
+                            result.push(Instruction::MemWriteS(addr, len));
+                        }
+                    }
+                }
+            }
             _ => eprintln!("Unknown instruction: {}", line),
         }
     }
@@ -109,6 +118,13 @@ pub fn split_instructions(instructions: &String) -> Vec<Instruction> {
 mod tests {
     use super::*;
     use crate::instruction::Instruction;
+
+    #[test]
+    fn test_memwrites_parse() {
+        let input = "MemWrites 10 4".to_string();
+        let parsed = split_instructions(&input);
+        assert_eq!(parsed, vec![Instruction::MemWriteS(10, 4)]);
+    }
 
     #[test]
     fn test_memwrite_parse() {

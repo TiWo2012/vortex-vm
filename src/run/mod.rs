@@ -154,6 +154,28 @@ pub fn execute(instructions: &[Instruction], output_buffer: &mut Vec<u8>) -> (Ve
 
                 i += 1;
             }
+            Instruction::MemWriteS(memory_index, write_len) => {
+                if *memory_index as usize + *write_len as usize <= mem.len() {
+                    let mut writes = Vec::with_capacity(*write_len as usize);
+                    for _ in 0..*write_len {
+                        if let Some(val) = stack.pop() {
+                            writes.push(val);
+                        } else {
+                            eprintln!("Stack underflow on MemWriteS");
+                            break;
+                        }
+                    }
+                    // Reverse because stack pop order is backwards
+                    writes.reverse();
+
+                    for (offset, val) in writes.into_iter().enumerate() {
+                        mem[*memory_index as usize + offset] = val;
+                    }
+                } else {
+                    eprintln!("MemWriteS out of bounds at index {}", memory_index);
+                }
+                i += 1; // 🔥 advance instruction pointer
+            }
         }
     }
 
@@ -172,6 +194,27 @@ mod tests {
 
     use super::*;
     use crate::instruction::Instruction;
+
+    #[test]
+    fn test_memwrites() {
+        let program = vec![
+            Instruction::Push(5),
+            Instruction::Dup,
+            Instruction::Dup,
+            Instruction::Dup,
+            Instruction::MemWriteS(0, 4),
+            Instruction::Ret,
+        ];
+        let mut output = Vec::new();
+        let (stack, memory) = execute(&program, &mut output);
+        let mut expected_memory = vec![0; 2048];
+        expected_memory[0] = 5;
+        expected_memory[1] = 5;
+        expected_memory[2] = 5;
+        expected_memory[3] = 5;
+        assert_eq!(stack, vec![]);
+        assert_eq!(memory, expected_memory)
+    }
 
     #[test]
     fn test_push_and_add() {
