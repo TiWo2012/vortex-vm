@@ -44,9 +44,7 @@ Build a stack-based VM in Rust that can:
 ---
 
 ## 🖨️ Phase 5 — Output / Debugging
-- [ ] Temporary `Print` function (not an instruction, just for debugging).
-- [ ] Add a “trace mode”: before each `step()`, print `ip`, current instr, stack.
-- [ ] Write a few end-to-end examples (factorial, sum of numbers).
+- [x] `Print` function 
 
 ---
 
