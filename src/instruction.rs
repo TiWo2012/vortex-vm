@@ -20,7 +20,7 @@ pub enum Instruction {
     DivS(i32),
     Div,
 
-    //       start, length, values
     MemWrite(i32, Vec<i32>),
+    MemRead(i32),
     Print(i32, i32),
 }

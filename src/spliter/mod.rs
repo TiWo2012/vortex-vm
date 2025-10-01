@@ -91,6 +91,13 @@ pub fn split_instructions(instructions: &String) -> Vec<Instruction> {
                     }
                 }
             }
+            "MEMREAD" => {
+                if parts.len() == 2 {
+                    if let Ok(index) = parts[1].parse::<i32>() {
+                        result.push(Instruction::MemRead(index));
+                    }
+                }
+            }
             _ => eprintln!("Unknown instruction: {}", line),
         }
     }
@@ -122,5 +129,18 @@ mod tests {
         let input = "PUSH 42\nPOP\n".to_string();
         let parsed = split_instructions(&input);
         assert_eq!(parsed, vec![Instruction::Push(42), Instruction::Pop]);
+    }
+
+    #[test]
+    fn test_memwrite() {
+        let input = "memwrite 0 1 2\n memread 1".to_string();
+        let parsed = split_instructions(&input);
+        assert_eq!(
+            parsed,
+            vec![
+                Instruction::MemWrite(0, vec![1, 2]),
+                Instruction::MemRead(1)
+            ]
+        );
     }
 }

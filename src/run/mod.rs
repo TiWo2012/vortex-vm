@@ -145,6 +145,15 @@ pub fn execute(instructions: &[Instruction], output_buffer: &mut Vec<u8>) -> (Ve
                 }
                 i += 1;
             }
+            Instruction::MemRead(index) => {
+                if *index >= mem.len() as i32 {
+                    eprintln!("Print out of bounds: {}", index);
+                }
+
+                stack.push(mem[*index as usize]);
+
+                i += 1;
+            }
         }
     }
 
@@ -159,6 +168,8 @@ pub fn run(instructions: &[Instruction]) {
 
 #[cfg(test)]
 mod tests {
+    use std::vec;
+
     use super::*;
     use crate::instruction::Instruction;
 
@@ -249,6 +260,26 @@ mod tests {
         predicted_mem[1] = 1;
         predicted_mem[2] = 1;
         predicted_mem[3] = 1;
+
+        assert_eq!(stack, predicted_stack);
+        assert_eq!(mem, predicted_mem);
+    }
+
+    #[test]
+    fn test_mem_read() {
+        let program = vec![
+            Instruction::MemWrite(0, vec![1, 2, 3, 4]),
+            Instruction::MemRead(0),
+            Instruction::Ret,
+        ];
+        let mut output = Vec::new();
+        let (stack, mem) = execute(&program, &mut output);
+        let predicted_stack = vec![1];
+        let mut predicted_mem = vec![0; 2048];
+        predicted_mem[0] = 1;
+        predicted_mem[1] = 2;
+        predicted_mem[2] = 3;
+        predicted_mem[3] = 4;
 
         assert_eq!(stack, predicted_stack);
         assert_eq!(mem, predicted_mem);
