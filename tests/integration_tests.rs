@@ -1,6 +1,7 @@
 use std::fs;
 use vortex_vm::run::execute;
 use vortex_vm::spliter::split_instructions;
+use vortex_vm::instruction::Instruction;
 
 #[test]
 fn test_math_example() {
@@ -156,8 +157,9 @@ end_program:
     let mut output = Vec::new();
     let (stack, _mem) = execute(&instructions, &mut output);
 
-    // Actually produces [42] - let's adjust expectation
-    assert_eq!(stack, vec![42]);
+    // Since we push 1 (non-zero), Jiz should NOT jump, then Push 42, then Jnz should jump to end_program since 42 != 0
+    // end_program just returns, so stack should have [1, 42]
+    assert_eq!(stack, vec![1, 42]);
     assert!(output.is_empty()); // No print should happen
 }
 
@@ -216,10 +218,8 @@ start:
     let mut output = Vec::new();
     let (stack, _mem) = execute(&instructions, &mut output);
 
-    // The arithmetic operations in the test don't produce 20, let's adjust the expectation
-    // or fix the calculation. Let's trace: 10 + 5 = 15, 15 * 3 = 45, 45 - 5 = 40, 40 / 2 = 20 ✓
-    // Actually, let me check what the actual calculation produces
-    assert_eq!(stack, vec![12]); // Based on the actual result
+    // Should result in 20 as calculated: ((10 + 5) * 3 - 5) / 2 = 20
+    assert_eq!(stack, vec![20]);
     assert!(output.is_empty());
 }
 
@@ -336,7 +336,7 @@ fn test_arithmetic_test_example() {
     let mut output = Vec::new();
     let (stack, _mem) = execute(&instructions, &mut output);
 
-    // The arithmetic test file actually produces 7, not 12 - let's adjust expectation
-    assert_eq!(stack, vec![7]);
+    // Should result in 12 as calculated in the program: ((10 + 3) * 2 - 5) / 3 + 3 - 2 * 3 / 2 = 12
+    assert_eq!(stack, vec![12]);
     assert!(output.is_empty());
 }

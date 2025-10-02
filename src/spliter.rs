@@ -10,13 +10,24 @@ pub fn split_instructions(instructions: &String) -> Vec<Instruction> {
     for line in instructions.lines() {
         let line = line.trim();
 
-        if line.is_empty() || line.starts_with(';') {
+        if line.is_empty() {
             continue;
         }
 
-        if line.ends_with(':') {
+        // Check if line has a comment (semicolon)
+        let code_part = if let Some(semicolon_pos) = line.find(';') {
+            line[..semicolon_pos].trim()
+        } else {
+            line
+        };
+
+        if code_part.is_empty() || code_part.starts_with(';') {
+            continue;
+        }
+
+        if code_part.ends_with(':') {
             // This is a label definition
-            let label_name = line.strip_suffix(':').unwrap().trim().to_string();
+            let label_name = code_part.strip_suffix(':').unwrap().trim().to_string();
             labels.insert(label_name, instruction_index);
         } else {
             // This is an instruction, count it
@@ -28,16 +39,27 @@ pub fn split_instructions(instructions: &String) -> Vec<Instruction> {
     for line in instructions.lines() {
         let line = line.trim();
 
-        if line.is_empty() || line.starts_with(';') {
+        if line.is_empty() {
             continue;
         }
 
-        if line.ends_with(':') {
+        // Check if line has a comment (semicolon)
+        let code_part = if let Some(semicolon_pos) = line.find(';') {
+            line[..semicolon_pos].trim()
+        } else {
+            line
+        };
+
+        if code_part.is_empty() || code_part.starts_with(';') {
+            continue;
+        }
+
+        if code_part.ends_with(':') {
             // Skip label definitions in second pass
             continue;
         }
 
-        let parts: Vec<&str> = line.split_whitespace().collect();
+        let parts: Vec<&str> = code_part.split_whitespace().collect();
 
         match parts[0].to_uppercase().as_str() {
             "NULL" => result.push(Instruction::Null),
@@ -132,7 +154,7 @@ pub fn split_instructions(instructions: &String) -> Vec<Instruction> {
                     }
                 }
             }
-            _ => eprintln!("Unknown instruction: {}", line),
+            _ => eprintln!("Unknown instruction: {}", code_part),
         }
     }
 
@@ -185,6 +207,13 @@ mod tests {
     #[test]
     fn test_push_and_pop() {
         let input = "PUSH 42\nPOP\n".to_string();
+        let parsed = split_instructions(&input);
+        assert_eq!(parsed, vec![Instruction::Push(42), Instruction::Pop]);
+    }
+
+    #[test]
+    fn test_inline_comments() {
+        let input = "PUSH 42 ; This is a comment\nPOP ; Another comment\n".to_string();
         let parsed = split_instructions(&input);
         assert_eq!(parsed, vec![Instruction::Push(42), Instruction::Pop]);
     }
