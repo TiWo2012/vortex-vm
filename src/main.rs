@@ -1,14 +1,9 @@
 use std::env;
 use std::fs;
 
-mod run;
-use run::execute;
-
-mod instruction;
-use instruction::Instruction;
-
-mod spliter;
-use spliter::split_instructions;
+use vortex_vm::instruction::Instruction;
+use vortex_vm::spliter::split_instructions;
+use vortex_vm::run::execute;
 
 fn main() {
     // step 0: get command line args

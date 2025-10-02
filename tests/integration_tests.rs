@@ -1,7 +1,6 @@
 use std::fs;
 use vortex_vm::run::execute;
 use vortex_vm::spliter::split_instructions;
-use vortex_vm::instruction::Instruction;
 
 #[test]
 fn test_math_example() {
@@ -74,7 +73,7 @@ fn test_mult_example() {
     let instructions = split_instructions(&content);
 
     let mut output = Vec::new();
-    let (stack, _mem) = execute(&instructions, &mut output);
+    let (_stack, _mem) = execute(&instructions, &mut output);
 
     // Verify it runs and produces some result
     assert!(output.is_empty());
@@ -155,7 +154,7 @@ end_program:
     let instructions = split_instructions(&program.to_string());
 
     let mut output = Vec::new();
-    let (stack, mem) = execute(&instructions, &mut output);
+    let (stack, _mem) = execute(&instructions, &mut output);
 
     // Actually produces [42] - let's adjust expectation
     assert_eq!(stack, vec![42]);
@@ -264,7 +263,8 @@ target:
     let instructions = split_instructions(&program.to_string());
 
     let mut output = Vec::new();
-    let (stack, _mem) = execute(&instructions, &mut output);
+    let (_stack, _mem) = execute(&instructions, &mut output);
+}
 
 #[test]
 fn test_backward_label_reference() {
@@ -289,7 +289,6 @@ start:
     // target pushes 42 and returns, so stack should be [42]
     assert_eq!(stack, vec![42]);
     assert!(output.is_empty());
-}
 }
 
 #[test]

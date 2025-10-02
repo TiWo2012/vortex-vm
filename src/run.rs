@@ -186,12 +186,6 @@ pub fn execute(instructions: &[Instruction], output_buffer: &mut Vec<u8>) -> (Ve
     (stack, mem)
 }
 
-pub fn run(instructions: &[Instruction]) {
-    let mut output = Vec::new();
-    let stack = execute(instructions, &mut output);
-    println!("{:?}", stack);
-}
-
 #[cfg(test)]
 mod tests {
     use std::vec;

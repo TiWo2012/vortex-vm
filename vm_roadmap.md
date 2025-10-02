@@ -49,7 +49,7 @@ Build a stack-based VM in Rust that can:
 ---
 
 ## 🚀 Phase 6 — Extras (Optional)
-- [ ] Labels in source code (`:loop` → resolved to instruction index).
+- [x] Labels in source code (`:loop` → resolved to instruction index).
 - [ ] Simple assembler: take a text file (`PUSH 5; PUSH 3; ADD`) → `Vec<Instruction>`.
 - [ ] Functions (`Call`, `Ret` with call stack).
 - [ ] Extended types (bools, strings).

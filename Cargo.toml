@@ -7,4 +7,4 @@ edition = "2024"
 
 [[test]]
 name = "integration_tests"
-path = "test/integration_tests.rs"
+path = "tests/integration_tests.rs"
