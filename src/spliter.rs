@@ -2,9 +2,71 @@ use crate::instruction::Instruction;
 use std::collections::HashMap;
 
 /// Parses assembly code into a sequence of instructions with label resolution.
+///
 /// Uses a two-pass algorithm:
 /// 1. First pass: Collect all label definitions and their instruction positions
 /// 2. Second pass: Parse instructions and resolve label references to addresses
+///
+/// # Examples
+///
+/// Basic instruction parsing:
+///
+/// ```
+/// use vortex_vm::spliter::split_instructions;
+/// use vortex_vm::instruction::Instruction;
+///
+/// let assembly = "PUSH 42\nADD\nRET";
+/// let instructions = split_instructions(assembly);
+///
+/// assert_eq!(instructions, vec![
+///     Instruction::Push(42),
+///     Instruction::Add,
+///     Instruction::Ret,
+/// ]);
+/// ```
+///
+/// Label resolution:
+///
+/// ```
+/// use vortex_vm::spliter::split_instructions;
+/// use vortex_vm::instruction::Instruction;
+///
+/// let assembly = "
+///     main:
+///     PUSH 10
+///     SUBS 1
+///     JNZ main
+///     RET
+/// ";
+/// let instructions = split_instructions(assembly);
+///
+/// // The label "main" should be resolved to address "0"
+/// if let Instruction::Jnz(target) = &instructions[2] {
+///     assert_eq!(target, "0");
+/// }
+/// ```
+///
+/// Memory operations with comments:
+///
+/// ```
+/// use vortex_vm::spliter::split_instructions;
+/// use vortex_vm::instruction::Instruction;
+///
+/// let assembly = "
+///     ; Write hello to memory
+///     MemWrite 0 72 101 108 108 111
+///     ; Print the message
+///     Print 0 5
+///     RET
+/// ";
+/// let instructions = split_instructions(assembly);
+///
+/// assert_eq!(instructions, vec![
+///     Instruction::MemWrite(0, vec![72, 101, 108, 108, 111]),
+///     Instruction::Print(0, 5),
+///     Instruction::Ret,
+/// ]);
+/// ```
 pub fn split_instructions(instructions: &str) -> Vec<Instruction> {
     let mut result = Vec::new();
     let mut labels = HashMap::new();
