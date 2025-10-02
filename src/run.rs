@@ -23,167 +23,232 @@ pub fn execute(instructions: &[Instruction], output_buffer: &mut Vec<u8>) -> (Ve
                 break;
             }
             Instruction::Jiz(target) => {
-                if let Some(&val) = stack.last() {
-                    if val == 0 {
-                        if let Ok(addr) = target.parse::<usize>() {
-                            if addr < instructions.len() {
-                                i = addr;
-                                continue;
-                            } else {
-                                break;
-                            }
-                        }
-                    }
-                }
-                i += 1;
+                i = execute_jiz(&stack, &instructions, i, target);
             }
             Instruction::Jnz(target) => {
-                if let Some(&val) = stack.last() {
-                    if val != 0 {
-                        if let Ok(addr) = target.parse::<usize>() {
-                            if addr < instructions.len() {
-                                i = addr;
-                                continue;
-                            } else {
-                                break;
-                            }
-                        }
-                    }
-                }
-                i += 1;
+                i = execute_jnz(&stack, &instructions, i, target);
             }
             Instruction::AddS(n) => {
-                if let Some(val) = stack.pop() {
-                    stack.push(val + n);
-                }
-                i += 1;
+                i = execute_adds(&mut stack, i, *n);
             }
             Instruction::Add => {
-                if stack.len() >= 2 {
-                    let a = stack.pop().unwrap();
-                    let b = stack.pop().unwrap();
-                    stack.push(b + a);
-                }
-                i += 1;
+                i = execute_add(&mut stack, i);
             }
             Instruction::SubS(n) => {
-                if let Some(val) = stack.pop() {
-                    stack.push(val - n);
-                }
-                i += 1;
+                i = execute_subs(&mut stack, i, *n);
             }
             Instruction::Sub => {
-                if stack.len() >= 2 {
-                    let a = stack.pop().unwrap();
-                    let b = stack.pop().unwrap();
-                    stack.push(b - a);
-                }
-                i += 1;
+                i = execute_sub(&mut stack, i);
             }
             Instruction::Dup => {
-                if let Some(&val) = stack.last() {
-                    stack.push(val);
-                }
-                i += 1;
+                i = execute_dup(&mut stack, i);
             }
             Instruction::Swap => {
-                if stack.len() >= 2 {
-                    let a = stack.pop().unwrap();
-                    let b = stack.pop().unwrap();
-                    stack.push(a);
-                    stack.push(b);
-                }
-                i += 1;
+                i = execute_swap(&mut stack, i);
             }
             Instruction::DivS(n) => {
-                if let Some(val) = stack.last_mut() {
-                    if *n != 0 {
-                        *val /= n;
-                    }
-                }
-                i += 1;
+                i = execute_divs(&mut stack, i, *n);
             }
             Instruction::Div => {
-                if stack.len() >= 2 {
-                    let a = stack.pop().unwrap();
-                    let b = stack.pop().unwrap();
-                    if a != 0 {
-                        stack.push(b / a);
-                    }
-                }
-                i += 1;
+                i = execute_div(&mut stack, i);
             }
             Instruction::MultS(n) => {
-                if let Some(val) = stack.last_mut() {
-                    *val *= n;
-                }
-                i += 1;
+                i = execute_mults(&mut stack, i, *n);
             }
             Instruction::Mult => {
-                if stack.len() >= 2 {
-                    let a = stack.pop().unwrap();
-                    let b = stack.pop().unwrap();
-                    stack.push(b * a);
-                }
-                i += 1;
+                i = execute_mult(&mut stack, i);
             }
             Instruction::MemWrite(start_addr, values) => {
-                if *start_addr < 2048 {
-                    for j in 0..values.len() {
-                        if (*start_addr as usize + j) < mem.len() {
-                            mem[*start_addr as usize + j] = values[j];
-                        }
-                    }
-                }
-                i += 1;
+                i = execute_memwrite(&mut mem, i, *start_addr, values);
             }
             Instruction::Print(start_addr, length) => {
-                let start = *start_addr as usize;
-                let end = start + *length as usize;
-                if end <= mem.len() {
-                    for idx in start..end {
-                        write!(output_buffer, "{}", mem[idx] as u8 as char).unwrap();
-                    }
-                } else {
-                    eprintln!("Print out of bounds: {}..{}", start, end);
-                }
-                i += 1;
+                i = execute_print(output_buffer, &mem, i, *start_addr, *length);
             }
             Instruction::MemRead(index) => {
-                if *index >= mem.len() as i32 {
-                    eprintln!("Print out of bounds: {}", index);
-                }
-
-                stack.push(mem[*index as usize]);
-
-                i += 1;
+                i = execute_memread(&mut stack, &mem, i, *index);
             }
             Instruction::MemWriteS(memory_index, write_len) => {
-                if *memory_index as usize + *write_len as usize <= mem.len() {
-                    let mut writes = Vec::with_capacity(*write_len as usize);
-                    for _ in 0..*write_len {
-                        if let Some(val) = stack.pop() {
-                            writes.push(val);
-                        } else {
-                            eprintln!("Stack underflow on MemWriteS");
-                            break;
-                        }
-                    }
-                    // Reverse because stack pop order is backwards
-                    writes.reverse();
-
-                    for (offset, val) in writes.into_iter().enumerate() {
-                        mem[*memory_index as usize + offset] = val;
-                    }
-                } else {
-                    eprintln!("MemWriteS out of bounds at index {}", memory_index);
-                }
-                i += 1; // 🔥 advance instruction pointer
+                i = execute_memwrites(&mut stack, &mut mem, i, *memory_index, *write_len);
             }
         }
     }
 
     (stack, mem)
+}
+
+// Jump instructions
+fn execute_jiz(stack: &[i32], instructions: &[Instruction], current_i: usize, target: &str) -> usize {
+    if let Some(&val) = stack.last() {
+        if val == 0 {
+            if let Ok(addr) = target.parse::<usize>() {
+                if addr < instructions.len() {
+                    return addr;
+                } else {
+                    return instructions.len(); // Break from loop
+                }
+            }
+        }
+    }
+    current_i + 1
+}
+
+fn execute_jnz(stack: &[i32], instructions: &[Instruction], current_i: usize, target: &str) -> usize {
+    if let Some(&val) = stack.last() {
+        if val != 0 {
+            if let Ok(addr) = target.parse::<usize>() {
+                if addr < instructions.len() {
+                    return addr;
+                } else {
+                    return instructions.len(); // Break from loop
+                }
+            }
+        }
+    }
+    current_i + 1
+}
+
+// Arithmetic instructions
+fn execute_adds(stack: &mut Vec<i32>, current_i: usize, n: i32) -> usize {
+    if let Some(val) = stack.pop() {
+        stack.push(val + n);
+    }
+    current_i + 1
+}
+
+fn execute_add(stack: &mut Vec<i32>, current_i: usize) -> usize {
+    if stack.len() >= 2 {
+        let a = stack.pop().unwrap();
+        let b = stack.pop().unwrap();
+        stack.push(b + a);
+    }
+    current_i + 1
+}
+
+fn execute_subs(stack: &mut Vec<i32>, current_i: usize, n: i32) -> usize {
+    if let Some(val) = stack.pop() {
+        stack.push(val - n);
+    }
+    current_i + 1
+}
+
+fn execute_sub(stack: &mut Vec<i32>, current_i: usize) -> usize {
+    if stack.len() >= 2 {
+        let a = stack.pop().unwrap();
+        let b = stack.pop().unwrap();
+        stack.push(b - a);
+    }
+    current_i + 1
+}
+
+fn execute_divs(stack: &mut Vec<i32>, current_i: usize, n: i32) -> usize {
+    if let Some(val) = stack.last_mut() {
+        if n != 0 {
+            *val /= n;
+        }
+    }
+    current_i + 1
+}
+
+fn execute_div(stack: &mut Vec<i32>, current_i: usize) -> usize {
+    if stack.len() >= 2 {
+        let a = stack.pop().unwrap();
+        let b = stack.pop().unwrap();
+        if a != 0 {
+            stack.push(b / a);
+        }
+    }
+    current_i + 1
+}
+
+fn execute_mults(stack: &mut Vec<i32>, current_i: usize, n: i32) -> usize {
+    if let Some(val) = stack.last_mut() {
+        *val *= n;
+    }
+    current_i + 1
+}
+
+fn execute_mult(stack: &mut Vec<i32>, current_i: usize) -> usize {
+    if stack.len() >= 2 {
+        let a = stack.pop().unwrap();
+        let b = stack.pop().unwrap();
+        stack.push(b * a);
+    }
+    current_i + 1
+}
+
+// Stack manipulation instructions
+fn execute_dup(stack: &mut Vec<i32>, current_i: usize) -> usize {
+    if let Some(&val) = stack.last() {
+        stack.push(val);
+    }
+    current_i + 1
+}
+
+fn execute_swap(stack: &mut Vec<i32>, current_i: usize) -> usize {
+    if stack.len() >= 2 {
+        let a = stack.pop().unwrap();
+        let b = stack.pop().unwrap();
+        stack.push(a);
+        stack.push(b);
+    }
+    current_i + 1
+}
+
+// Memory instructions
+fn execute_memwrite(mem: &mut Vec<i32>, current_i: usize, start_addr: i32, values: &[i32]) -> usize {
+    if start_addr < 2048 {
+        for j in 0..values.len() {
+            if (start_addr as usize + j) < mem.len() {
+                mem[start_addr as usize + j] = values[j];
+            }
+        }
+    }
+    current_i + 1
+}
+
+fn execute_memwrites(stack: &mut Vec<i32>, mem: &mut Vec<i32>, current_i: usize, memory_index: i32, write_len: i32) -> usize {
+    if memory_index as usize + write_len as usize <= mem.len() {
+        let mut writes = Vec::with_capacity(write_len as usize);
+        for _ in 0..write_len {
+            if let Some(val) = stack.pop() {
+                writes.push(val);
+            } else {
+                eprintln!("Stack underflow on MemWriteS");
+                break;
+            }
+        }
+        // Reverse because stack pop order is backwards
+        writes.reverse();
+
+        for (offset, val) in writes.into_iter().enumerate() {
+            mem[memory_index as usize + offset] = val;
+        }
+    } else {
+        eprintln!("MemWriteS out of bounds at index {}", memory_index);
+    }
+    current_i + 1
+}
+
+fn execute_memread(stack: &mut Vec<i32>, mem: &[i32], current_i: usize, index: i32) -> usize {
+    if index >= mem.len() as i32 {
+        eprintln!("MemRead out of bounds: {}", index);
+    } else {
+        stack.push(mem[index as usize]);
+    }
+    current_i + 1
+}
+
+fn execute_print(output_buffer: &mut Vec<u8>, mem: &[i32], current_i: usize, start_addr: i32, length: i32) -> usize {
+    let start = start_addr as usize;
+    let end = start + length as usize;
+    if end <= mem.len() {
+        for idx in start..end {
+            write!(output_buffer, "{}", mem[idx] as u8 as char).unwrap();
+        }
+    } else {
+        eprintln!("Print out of bounds: {}..{}", start, end);
+    }
+    current_i + 1
 }
 
 #[cfg(test)]
