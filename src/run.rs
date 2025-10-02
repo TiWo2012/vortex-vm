@@ -23,10 +23,10 @@ pub fn execute(instructions: &[Instruction], output_buffer: &mut Vec<u8>) -> (Ve
                 break;
             }
             Instruction::Jiz(target) => {
-                i = execute_jiz(&stack, &instructions, i, target);
+                i = execute_jiz(&stack, instructions, i, target);
             }
             Instruction::Jnz(target) => {
-                i = execute_jnz(&stack, &instructions, i, target);
+                i = execute_jnz(&stack, instructions, i, target);
             }
             Instruction::AddS(n) => {
                 i = execute_adds(&mut stack, i, *n);
@@ -78,33 +78,27 @@ pub fn execute(instructions: &[Instruction], output_buffer: &mut Vec<u8>) -> (Ve
 
 // Jump instructions
 fn execute_jiz(stack: &[i32], instructions: &[Instruction], current_i: usize, target: &str) -> usize {
-    if let Some(&val) = stack.last() {
-        if val == 0 {
-            if let Ok(addr) = target.parse::<usize>() {
-                if addr < instructions.len() {
-                    return addr;
-                } else {
-                    return instructions.len(); // Break from loop
-                }
-            }
-        }
+    if let Some(&val) = stack.last()
+        && val == 0
+        && let Ok(addr) = target.parse::<usize>()
+        && addr < instructions.len()
+    {
+        addr
+    } else {
+        current_i + 1
     }
-    current_i + 1
 }
 
 fn execute_jnz(stack: &[i32], instructions: &[Instruction], current_i: usize, target: &str) -> usize {
-    if let Some(&val) = stack.last() {
-        if val != 0 {
-            if let Ok(addr) = target.parse::<usize>() {
-                if addr < instructions.len() {
-                    return addr;
-                } else {
-                    return instructions.len(); // Break from loop
-                }
-            }
-        }
+    if let Some(&val) = stack.last()
+        && val != 0
+        && let Ok(addr) = target.parse::<usize>()
+        && addr < instructions.len()
+    {
+        addr
+    } else {
+        current_i + 1
     }
-    current_i + 1
 }
 
 // Arithmetic instructions
@@ -140,11 +134,9 @@ fn execute_sub(stack: &mut Vec<i32>, current_i: usize) -> usize {
     current_i + 1
 }
 
-fn execute_divs(stack: &mut Vec<i32>, current_i: usize, n: i32) -> usize {
-    if let Some(val) = stack.last_mut() {
-        if n != 0 {
-            *val /= n;
-        }
+fn execute_divs(stack: &mut [i32], current_i: usize, n: i32) -> usize {
+    if let Some(val) = stack.last_mut() && n != 0 {
+        *val /= n;
     }
     current_i + 1
 }
@@ -160,7 +152,7 @@ fn execute_div(stack: &mut Vec<i32>, current_i: usize) -> usize {
     current_i + 1
 }
 
-fn execute_mults(stack: &mut Vec<i32>, current_i: usize, n: i32) -> usize {
+fn execute_mults(stack: &mut [i32], current_i: usize, n: i32) -> usize {
     if let Some(val) = stack.last_mut() {
         *val *= n;
     }
@@ -195,7 +187,7 @@ fn execute_swap(stack: &mut Vec<i32>, current_i: usize) -> usize {
 }
 
 // Memory instructions
-fn execute_memwrite(mem: &mut Vec<i32>, current_i: usize, start_addr: i32, values: &[i32]) -> usize {
+fn execute_memwrite(mem: &mut [i32], current_i: usize, start_addr: i32, values: &[i32]) -> usize {
     if start_addr < 2048 {
         for j in 0..values.len() {
             if (start_addr as usize + j) < mem.len() {
@@ -206,7 +198,7 @@ fn execute_memwrite(mem: &mut Vec<i32>, current_i: usize, start_addr: i32, value
     current_i + 1
 }
 
-fn execute_memwrites(stack: &mut Vec<i32>, mem: &mut Vec<i32>, current_i: usize, memory_index: i32, write_len: i32) -> usize {
+fn execute_memwrites(stack: &mut Vec<i32>, mem: &mut [i32], current_i: usize, memory_index: i32, write_len: i32) -> usize {
     if memory_index as usize + write_len as usize <= mem.len() {
         let mut writes = Vec::with_capacity(write_len as usize);
         for _ in 0..write_len {
@@ -242,8 +234,8 @@ fn execute_print(output_buffer: &mut Vec<u8>, mem: &[i32], current_i: usize, sta
     let start = start_addr as usize;
     let end = start + length as usize;
     if end <= mem.len() {
-        for idx in start..end {
-            write!(output_buffer, "{}", mem[idx] as u8 as char).unwrap();
+        for &byte_val in mem.iter().take(end).skip(start) {
+            write!(output_buffer, "{}", byte_val as u8 as char).unwrap();
         }
     } else {
         eprintln!("Print out of bounds: {}..{}", start, end);

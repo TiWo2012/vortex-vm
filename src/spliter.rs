@@ -5,7 +5,7 @@ use std::collections::HashMap;
 /// Uses a two-pass algorithm:
 /// 1. First pass: Collect all label definitions and their instruction positions
 /// 2. Second pass: Parse instructions and resolve label references to addresses
-pub fn split_instructions(instructions: &String) -> Vec<Instruction> {
+pub fn split_instructions(instructions: &str) -> Vec<Instruction> {
     let mut result = Vec::new();
     let mut labels = HashMap::new();
 
@@ -29,12 +29,12 @@ fn collect_labels(instructions: &str, labels: &mut HashMap<String, usize>) {
     for line in instructions.lines() {
         let clean_line = extract_code_portion(line);
 
-        if clean_line.is_empty() || is_comment_line(&clean_line) {
+        if clean_line.is_empty() || is_comment_line(clean_line) {
             continue;
         }
 
-        if is_label_definition(&clean_line) {
-            let label_name = extract_label_name(&clean_line);
+        if is_label_definition(clean_line) {
+            let label_name = extract_label_name(clean_line);
             labels.insert(label_name, instruction_index);
         } else {
             // This is an instruction, so it takes up an instruction slot
@@ -49,11 +49,11 @@ fn parse_instructions(instructions: &str, _labels: &HashMap<String, usize>, resu
     for line in instructions.lines() {
         let clean_line = extract_code_portion(line);
 
-        if clean_line.is_empty() || is_comment_line(&clean_line) || is_label_definition(&clean_line) {
+        if clean_line.is_empty() || is_comment_line(clean_line) || is_label_definition(clean_line) {
             continue;
         }
 
-        if let Some(instruction) = parse_instruction_line(&clean_line) {
+        if let Some(instruction) = parse_instruction_line(clean_line) {
             result.push(instruction);
         }
     }
@@ -61,7 +61,7 @@ fn parse_instructions(instructions: &str, _labels: &HashMap<String, usize>, resu
 
 /// Third pass: Replace all label references in jump instructions with their actual instruction indices.
 /// Converts labels like "main" to their corresponding instruction index as a string.
-fn resolve_label_references(instructions: &mut Vec<Instruction>, labels: &HashMap<String, usize>) {
+fn resolve_label_references(instructions: &mut [Instruction], labels: &HashMap<String, usize>) {
     for instruction in instructions.iter_mut() {
         match instruction {
             Instruction::Jiz(target) | Instruction::Jnz(target) => {
