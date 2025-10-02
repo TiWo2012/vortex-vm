@@ -314,200 +314,216 @@ mod tests {
     use super::*;
     use crate::instruction::Instruction;
 
-    #[test]
-    fn test_memwrites() {
-        let program = vec![
-            Instruction::Push(5),
-            Instruction::Dup,
-            Instruction::Dup,
-            Instruction::Dup,
-            Instruction::MemWriteS(0, 4),
-            Instruction::Ret,
-        ];
-        let mut output = Vec::new();
-        let (stack, memory) = execute(&program, &mut output);
-        let mut expected_memory = vec![0; 2048];
-        expected_memory[0] = 5;
-        expected_memory[1] = 5;
-        expected_memory[2] = 5;
-        expected_memory[3] = 5;
-        assert_eq!(stack, vec![]);
-        assert_eq!(memory, expected_memory)
+    mod stack_operations {
+        use super::*;
+
+        #[test]
+        fn test_null_instruction() {
+            let program = vec![
+                Instruction::Push(42),
+                Instruction::Null, // Should do nothing
+                Instruction::Ret,
+            ];
+            let mut output = Vec::new();
+            let (stack, _) = execute(&program, &mut output);
+            assert_eq!(stack, vec![42]); // Stack should remain unchanged
+        }
+
+        #[test]
+        fn test_push_and_add() {
+            let program = vec![Instruction::Push(5), Instruction::AddS(3), Instruction::Ret];
+            let mut output = Vec::new();
+            let (stack, _) = execute(&program, &mut output);
+            assert_eq!(stack, vec![8]);
+        }
+
+        #[test]
+        fn test_push_pop() {
+            let program = vec![Instruction::Push(10), Instruction::Pop, Instruction::Ret];
+            let mut output = Vec::new();
+            let (stack, _) = execute(&program, &mut output);
+            assert!(stack.is_empty());
+        }
+
+        #[test]
+        fn test_dup_and_swap() {
+            let program = vec![
+                Instruction::Push(1),
+                Instruction::Push(2),
+                Instruction::Swap, // stack: [2,1]
+                Instruction::Dup,  // stack: [2,1,1]
+                Instruction::Ret,
+            ];
+            let mut output = Vec::new();
+            let (stack, _) = execute(&program, &mut output);
+            assert_eq!(stack, vec![2, 1, 1]);
+        }
+
+        #[test]
+        fn test_subtract() {
+            let program = vec![
+                Instruction::Push(10),
+                Instruction::Push(3),
+                Instruction::Sub, // 10 - 3 = 7
+                Instruction::Ret,
+            ];
+            let mut output = Vec::new();
+            let (stack, _) = execute(&program, &mut output);
+            assert_eq!(stack, vec![7]);
+        }
     }
 
-    #[test]
-    fn test_push_and_add() {
-        let program = vec![Instruction::Push(5), Instruction::AddS(3), Instruction::Ret];
-        let mut output = Vec::new();
-        let (stack, _) = execute(&program, &mut output);
-        assert_eq!(stack, vec![8]);
+    mod arithmetic_operations {
+        use super::*;
+
+        #[test]
+        fn test_mult_and_div() {
+            let program = vec![
+                Instruction::Push(1),
+                Instruction::Push(25),
+                Instruction::Mult, // [25]
+                Instruction::Dup,  // [25,25]
+                Instruction::Div,  // [1]
+                Instruction::Ret,
+            ];
+            let mut output = Vec::new();
+            let (stack, _) = execute(&program, &mut output);
+            assert_eq!(stack, vec![1]);
+        }
+
+        #[test]
+        fn test_mults_and_divs() {
+            let program = vec![
+                Instruction::Push(2),
+                Instruction::MultS(2), // [4]
+                Instruction::Dup,      // [4,4]
+                Instruction::DivS(2),  // [4,2]
+                Instruction::Ret,
+            ];
+            let mut output = Vec::new();
+            let (stack, _) = execute(&program, &mut output);
+            assert_eq!(stack, vec![4, 2]);
+        }
     }
 
-    #[test]
-    fn test_null_instruction() {
-        let program = vec![
-            Instruction::Push(42),
-            Instruction::Null, // Should do nothing
-            Instruction::Ret,
-        ];
-        let mut output = Vec::new();
-        let (stack, _) = execute(&program, &mut output);
-        assert_eq!(stack, vec![42]); // Stack should remain unchanged
+    mod control_flow {
+        use super::*;
+
+        #[test]
+        fn test_loop_program() {
+            let program = vec![
+                Instruction::Push(5),
+                Instruction::SubS(1),
+                Instruction::Jnz("1".to_string()),
+                Instruction::Ret,
+            ];
+            let mut output = Vec::new();
+            let (stack, _) = execute(&program, &mut output);
+            assert_eq!(stack, vec![0]);
+        }
+
+        #[test]
+        fn test_jiz_jump() {
+            let program = vec![
+                Instruction::Push(0),
+                Instruction::Jiz("3".to_string()), // Jump to RET if zero (which it is)
+                Instruction::Push(99), // This should be skipped
+                Instruction::Ret,
+            ];
+            let mut output = Vec::new();
+            let (stack, _) = execute(&program, &mut output);
+            assert_eq!(stack, vec![0]); // Should not push 99
+        }
+
+        #[test]
+        fn test_jiz_no_jump() {
+            let program = vec![
+                Instruction::Push(1),
+                Instruction::Jiz("3".to_string()), // Don't jump if not zero
+                Instruction::Push(99), // This should execute
+                Instruction::Ret,
+            ];
+            let mut output = Vec::new();
+            let (stack, _) = execute(&program, &mut output);
+            assert_eq!(stack, vec![1, 99]); // Should push 99
+        }
     }
 
-    #[test]
-    fn test_push_pop() {
-        let program = vec![Instruction::Push(10), Instruction::Pop, Instruction::Ret];
-        let mut output = Vec::new();
-        let (stack, _) = execute(&program, &mut output);
-        assert!(stack.is_empty());
-    }
+    mod memory_operations {
+        use super::*;
 
-    #[test]
-    fn test_dup_and_swap() {
-        let program = vec![
-            Instruction::Push(1),
-            Instruction::Push(2),
-            Instruction::Swap, // stack: [2,1]
-            Instruction::Dup,  // stack: [2,1,1]
-            Instruction::Ret,
-        ];
-        let mut output = Vec::new();
-        let (stack, _) = execute(&program, &mut output);
-        assert_eq!(stack, vec![2, 1, 1]);
-    }
+        #[test]
+        fn test_memwrites() {
+            let program = vec![
+                Instruction::Push(5),
+                Instruction::Dup,
+                Instruction::Dup,
+                Instruction::Dup,
+                Instruction::MemWriteS(0, 4),
+                Instruction::Ret,
+            ];
+            let mut output = Vec::new();
+            let (stack, memory) = execute(&program, &mut output);
+            let mut expected_memory = vec![0; 2048];
+            expected_memory[0] = 5;
+            expected_memory[1] = 5;
+            expected_memory[2] = 5;
+            expected_memory[3] = 5;
+            assert_eq!(stack, vec![]);
+            assert_eq!(memory, expected_memory)
+        }
 
-    #[test]
-    fn test_mult_and_div() {
-        let program = vec![
-            Instruction::Push(1),
-            Instruction::Push(25),
-            Instruction::Mult, // [25]
-            Instruction::Dup,  // [25,25]
-            Instruction::Div,  // [1]
-            Instruction::Ret,
-        ];
-        let mut output = Vec::new();
-        let (stack, _) = execute(&program, &mut output);
-        assert_eq!(stack, vec![1]);
-    }
+        #[test]
+        fn test_mem_write() {
+            let program = vec![
+                Instruction::Push(0),
+                Instruction::MemWrite(0, vec![1, 1, 1, 1]),
+                Instruction::Ret,
+            ];
+            let mut output = Vec::new();
+            let (stack, mem) = execute(&program, &mut output);
+            let predicted_stack = vec![0];
+            let mut predicted_mem = vec![0; 2048];
+            predicted_mem[0] = 1;
+            predicted_mem[1] = 1;
+            predicted_mem[2] = 1;
+            predicted_mem[3] = 1;
 
-    #[test]
-    fn test_mults_and_divs() {
-        let program = vec![
-            Instruction::Push(2),
-            Instruction::MultS(2), // [4]
-            Instruction::Dup,      // [4,4]
-            Instruction::DivS(2),  // [4,2]
-            Instruction::Ret,
-        ];
-        let mut output = Vec::new();
-        let (stack, _) = execute(&program, &mut output);
-        assert_eq!(stack, vec![4, 2]);
-    }
+            assert_eq!(stack, predicted_stack);
+            assert_eq!(mem, predicted_mem);
+        }
 
-    #[test]
-    fn test_subtract() {
-        let program = vec![
-            Instruction::Push(10),
-            Instruction::Push(3),
-            Instruction::Sub, // 10 - 3 = 7
-            Instruction::Ret,
-        ];
-        let mut output = Vec::new();
-        let (stack, _) = execute(&program, &mut output);
-        assert_eq!(stack, vec![7]);
-    }
+        #[test]
+        fn test_mem_read() {
+            let program = vec![
+                Instruction::MemWrite(0, vec![1, 2, 3, 4]),
+                Instruction::MemRead(0),
+                Instruction::Ret,
+            ];
+            let mut output = Vec::new();
+            let (stack, mem) = execute(&program, &mut output);
+            let predicted_stack = vec![1];
+            let mut predicted_mem = vec![0; 2048];
+            predicted_mem[0] = 1;
+            predicted_mem[1] = 2;
+            predicted_mem[2] = 3;
+            predicted_mem[3] = 4;
 
-    #[test]
-    fn test_loop_program() {
-        let program = vec![
-            Instruction::Push(5),
-            Instruction::SubS(1),
-            Instruction::Jnz("1".to_string()),
-            Instruction::Ret,
-        ];
-        let mut output = Vec::new();
-        let (stack, _) = execute(&program, &mut output);
-        assert_eq!(stack, vec![0]);
-    }
+            assert_eq!(stack, predicted_stack);
+            assert_eq!(mem, predicted_mem);
+        }
 
-    #[test]
-    fn test_jiz_jump() {
-        let program = vec![
-            Instruction::Push(0),
-            Instruction::Jiz("3".to_string()), // Jump to RET if zero (which it is)
-            Instruction::Push(99), // This should be skipped
-            Instruction::Ret,
-        ];
-        let mut output = Vec::new();
-        let (stack, _) = execute(&program, &mut output);
-        assert_eq!(stack, vec![0]); // Should not push 99
-    }
-
-    #[test]
-    fn test_jiz_no_jump() {
-        let program = vec![
-            Instruction::Push(1),
-            Instruction::Jiz("3".to_string()), // Don't jump if not zero
-            Instruction::Push(99), // This should execute
-            Instruction::Ret,
-        ];
-        let mut output = Vec::new();
-        let (stack, _) = execute(&program, &mut output);
-        assert_eq!(stack, vec![1, 99]); // Should push 99
-    }
-
-    #[test]
-    fn test_mem_write() {
-        let program = vec![
-            Instruction::Push(0),
-            Instruction::MemWrite(0, vec![1, 1, 1, 1]),
-            Instruction::Ret,
-        ];
-        let mut output = Vec::new();
-        let (stack, mem) = execute(&program, &mut output);
-        let predicted_stack = vec![0];
-        let mut predicted_mem = vec![0; 2048];
-        predicted_mem[0] = 1;
-        predicted_mem[1] = 1;
-        predicted_mem[2] = 1;
-        predicted_mem[3] = 1;
-
-        assert_eq!(stack, predicted_stack);
-        assert_eq!(mem, predicted_mem);
-    }
-
-    #[test]
-    fn test_mem_read() {
-        let program = vec![
-            Instruction::MemWrite(0, vec![1, 2, 3, 4]),
-            Instruction::MemRead(0),
-            Instruction::Ret,
-        ];
-        let mut output = Vec::new();
-        let (stack, mem) = execute(&program, &mut output);
-        let predicted_stack = vec![1];
-        let mut predicted_mem = vec![0; 2048];
-        predicted_mem[0] = 1;
-        predicted_mem[1] = 2;
-        predicted_mem[2] = 3;
-        predicted_mem[3] = 4;
-
-        assert_eq!(stack, predicted_stack);
-        assert_eq!(mem, predicted_mem);
-    }
-
-    #[test]
-    fn test_print() {
-        let program = vec![
-            Instruction::MemWrite(0, vec![72, 101, 108, 108, 111, 33]), // "Hello!"
-            Instruction::Print(0, 6),
-            Instruction::Ret,
-        ];
-        let mut output = Vec::new();
-        let (_stack, _mem) = execute(&program, &mut output);
-        let printed = String::from_utf8(output).unwrap();
-        assert_eq!(printed, "Hello!");
+        #[test]
+        fn test_print() {
+            let program = vec![
+                Instruction::MemWrite(0, vec![72, 101, 108, 108, 111, 33]), // "Hello!"
+                Instruction::Print(0, 6),
+                Instruction::Ret,
+            ];
+            let mut output = Vec::new();
+            let (_stack, _mem) = execute(&program, &mut output);
+            let printed = String::from_utf8(output).unwrap();
+            assert_eq!(printed, "Hello!");
+        }
     }
 }
