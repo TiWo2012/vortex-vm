@@ -1,7 +1,6 @@
 use std::fs;
 use vortex_vm::run::execute;
 use vortex_vm::spliter::split_instructions;
-use vortex_vm::instruction::Instruction;
 
 #[test]
 fn test_math_example() {

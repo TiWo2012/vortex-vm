@@ -45,7 +45,7 @@ fn collect_labels(instructions: &str, labels: &mut HashMap<String, usize>) {
 
 /// Second pass: Parse each line as an instruction, ignoring labels and comments.
 /// Label references (like "main" or "loop") are kept as strings for later resolution.
-fn parse_instructions(instructions: &str, labels: &HashMap<String, usize>, result: &mut Vec<Instruction>) {
+fn parse_instructions(instructions: &str, _labels: &HashMap<String, usize>, result: &mut Vec<Instruction>) {
     for line in instructions.lines() {
         let clean_line = extract_code_portion(line);
 
