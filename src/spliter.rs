@@ -2,9 +2,71 @@ use crate::instruction::Instruction;
 use std::collections::HashMap;
 
 /// Parses assembly code into a sequence of instructions with label resolution.
+///
 /// Uses a two-pass algorithm:
 /// 1. First pass: Collect all label definitions and their instruction positions
 /// 2. Second pass: Parse instructions and resolve label references to addresses
+///
+/// # Examples
+///
+/// Basic instruction parsing:
+///
+/// ```
+/// use vortex_vm::spliter::split_instructions;
+/// use vortex_vm::instruction::Instruction;
+///
+/// let assembly = "PUSH 42\nADD\nRET";
+/// let instructions = split_instructions(assembly);
+///
+/// assert_eq!(instructions, vec![
+///     Instruction::Push(42),
+///     Instruction::Add,
+///     Instruction::Ret,
+/// ]);
+/// ```
+///
+/// Label resolution:
+///
+/// ```
+/// use vortex_vm::spliter::split_instructions;
+/// use vortex_vm::instruction::Instruction;
+///
+/// let assembly = "
+///     main:
+///     PUSH 10
+///     SUBS 1
+///     JNZ main
+///     RET
+/// ";
+/// let instructions = split_instructions(assembly);
+///
+/// // The label "main" should be resolved to address "0"
+/// if let Instruction::Jnz(target) = &instructions[2] {
+///     assert_eq!(target, "0");
+/// }
+/// ```
+///
+/// Memory operations with comments:
+///
+/// ```
+/// use vortex_vm::spliter::split_instructions;
+/// use vortex_vm::instruction::Instruction;
+///
+/// let assembly = "
+///     ; Write hello to memory
+///     MemWrite 0 72 101 108 108 111
+///     ; Print the message
+///     Print 0 5
+///     RET
+/// ";
+/// let instructions = split_instructions(assembly);
+///
+/// assert_eq!(instructions, vec![
+///     Instruction::MemWrite(0, vec![72, 101, 108, 108, 111]),
+///     Instruction::Print(0, 5),
+///     Instruction::Ret,
+/// ]);
+/// ```
 pub fn split_instructions(instructions: &str) -> Vec<Instruction> {
     let mut result = Vec::new();
     let mut labels = HashMap::new();
@@ -245,51 +307,245 @@ mod tests {
     use super::*;
     use crate::instruction::Instruction;
 
-    #[test]
-    fn test_memwrites_parse() {
-        let input = "MemWrites 10 4".to_string();
-        let parsed = split_instructions(&input);
-        assert_eq!(parsed, vec![Instruction::MemWriteS(10, 4)]);
+    mod stack_operations {
+        use super::*;
+
+        #[test]
+        fn test_null_parse() {
+            let input = "NULL".to_string();
+            let parsed = split_instructions(&input);
+            assert_eq!(parsed, vec![Instruction::Null]);
+        }
+
+        #[test]
+        fn test_push_parse() {
+            let input = "PUSH 42".to_string();
+            let parsed = split_instructions(&input);
+            assert_eq!(parsed, vec![Instruction::Push(42)]);
+        }
+
+        #[test]
+        fn test_pop_parse() {
+            let input = "POP".to_string();
+            let parsed = split_instructions(&input);
+            assert_eq!(parsed, vec![Instruction::Pop]);
+        }
+
+        #[test]
+        fn test_dup_parse() {
+            let input = "DUP".to_string();
+            let parsed = split_instructions(&input);
+            assert_eq!(parsed, vec![Instruction::Dup]);
+        }
+
+        #[test]
+        fn test_swap_parse() {
+            let input = "SWAP".to_string();
+            let parsed = split_instructions(&input);
+            assert_eq!(parsed, vec![Instruction::Swap]);
+        }
+
+        #[test]
+        fn test_push_and_pop() {
+            let input = "PUSH 42\nPOP".to_string();
+            let parsed = split_instructions(&input);
+            assert_eq!(parsed, vec![Instruction::Push(42), Instruction::Pop]);
+        }
     }
 
-    #[test]
-    fn test_memwrite_parse() {
-        let input = "MemWrite 10 1 2 3 4".to_string();
-        let parsed = split_instructions(&input);
-        assert_eq!(parsed, vec![Instruction::MemWrite(10, vec![1, 2, 3, 4])]);
+    mod control_flow {
+        use super::*;
+
+        #[test]
+        fn test_ret_parse() {
+            let input = "RET".to_string();
+            let parsed = split_instructions(&input);
+            assert_eq!(parsed, vec![Instruction::Ret]);
+        }
+
+        #[test]
+        fn test_jiz_parse() {
+            let input = "JIZ 5".to_string();
+            let parsed = split_instructions(&input);
+            assert_eq!(parsed, vec![Instruction::Jiz("5".to_string())]);
+        }
+
+        #[test]
+        fn test_jnz_parse() {
+            let input = "JNZ main".to_string();
+            let parsed = split_instructions(&input);
+            assert_eq!(parsed, vec![Instruction::Jnz("main".to_string())]);
+        }
+
+        #[test]
+        fn test_jumps_with_labels() {
+            let input = "JIZ start\nJNZ end".to_string();
+            let parsed = split_instructions(&input);
+            assert_eq!(parsed, vec![
+                Instruction::Jiz("start".to_string()),
+                Instruction::Jnz("end".to_string())
+            ]);
+        }
     }
 
-    #[test]
-    fn test_print_parse() {
-        let input = "Print 5 3".to_string();
-        let parsed = split_instructions(&input);
-        assert_eq!(parsed, vec![Instruction::Print(5, 3)]);
+    mod arithmetic_operations {
+        use super::*;
+
+        #[test]
+        fn test_add_parse() {
+            let input = "ADD".to_string();
+            let parsed = split_instructions(&input);
+            assert_eq!(parsed, vec![Instruction::Add]);
+        }
+
+        #[test]
+        fn test_adds_parse() {
+            let input = "ADDS 5".to_string();
+            let parsed = split_instructions(&input);
+            assert_eq!(parsed, vec![Instruction::AddS(5)]);
+        }
+
+        #[test]
+        fn test_sub_parse() {
+            let input = "SUB".to_string();
+            let parsed = split_instructions(&input);
+            assert_eq!(parsed, vec![Instruction::Sub]);
+        }
+
+        #[test]
+        fn test_subs_parse() {
+            let input = "SUBS 3".to_string();
+            let parsed = split_instructions(&input);
+            assert_eq!(parsed, vec![Instruction::SubS(3)]);
+        }
+
+        #[test]
+        fn test_mult_parse() {
+            let input = "MULT".to_string();
+            let parsed = split_instructions(&input);
+            assert_eq!(parsed, vec![Instruction::Mult]);
+        }
+
+        #[test]
+        fn test_mults_parse() {
+            let input = "MULTS 2".to_string();
+            let parsed = split_instructions(&input);
+            assert_eq!(parsed, vec![Instruction::MultS(2)]);
+        }
+
+        #[test]
+        fn test_div_parse() {
+            let input = "DIV".to_string();
+            let parsed = split_instructions(&input);
+            assert_eq!(parsed, vec![Instruction::Div]);
+        }
+
+        #[test]
+        fn test_divs_parse() {
+            let input = "DIVS 4".to_string();
+            let parsed = split_instructions(&input);
+            assert_eq!(parsed, vec![Instruction::DivS(4)]);
+        }
     }
 
-    #[test]
-    fn test_push_and_pop() {
-        let input = "PUSH 42\nPOP\n".to_string();
-        let parsed = split_instructions(&input);
-        assert_eq!(parsed, vec![Instruction::Push(42), Instruction::Pop]);
+    mod memory_operations {
+        use super::*;
+
+        #[test]
+        fn test_memwrites_parse() {
+            let input = "MemWrites 10 4".to_string();
+            let parsed = split_instructions(&input);
+            assert_eq!(parsed, vec![Instruction::MemWriteS(10, 4)]);
+        }
+
+        #[test]
+        fn test_memwrite_parse() {
+            let input = "MemWrite 10 1 2 3 4".to_string();
+            let parsed = split_instructions(&input);
+            assert_eq!(parsed, vec![Instruction::MemWrite(10, vec![1, 2, 3, 4])]);
+        }
+
+        #[test]
+        fn test_memread_parse() {
+            let input = "MemRead 5".to_string();
+            let parsed = split_instructions(&input);
+            assert_eq!(parsed, vec![Instruction::MemRead(5)]);
+        }
+
+        #[test]
+        fn test_print_parse() {
+            let input = "Print 5 3".to_string();
+            let parsed = split_instructions(&input);
+            assert_eq!(parsed, vec![Instruction::Print(5, 3)]);
+        }
+
+        #[test]
+        fn test_memwrite_complex() {
+            let input = "memwrite 0 1 2\n memread 1".to_string();
+            let parsed = split_instructions(&input);
+            assert_eq!(
+                parsed,
+                vec![
+                    Instruction::MemWrite(0, vec![1, 2]),
+                    Instruction::MemRead(1)
+                ]
+            );
+        }
     }
 
-    #[test]
-    fn test_inline_comments() {
-        let input = "PUSH 42 ; This is a comment\nPOP ; Another comment\n".to_string();
-        let parsed = split_instructions(&input);
-        assert_eq!(parsed, vec![Instruction::Push(42), Instruction::Pop]);
-    }
+    mod comment_and_edge_cases {
+        use super::*;
 
-    #[test]
-    fn test_memwrite() {
-        let input = "memwrite 0 1 2\n memread 1".to_string();
-        let parsed = split_instructions(&input);
-        assert_eq!(
-            parsed,
-            vec![
-                Instruction::MemWrite(0, vec![1, 2]),
-                Instruction::MemRead(1)
-            ]
-        );
+        #[test]
+        fn test_inline_comments() {
+            let input = "PUSH 42 ; This is a comment\nPOP ; Another comment".to_string();
+            let parsed = split_instructions(&input);
+            assert_eq!(parsed, vec![Instruction::Push(42), Instruction::Pop]);
+        }
+
+        #[test]
+        fn test_empty_lines() {
+            let input = "\nPUSH 42\n\nPOP\n".to_string();
+            let parsed = split_instructions(&input);
+            assert_eq!(parsed, vec![Instruction::Push(42), Instruction::Pop]);
+        }
+
+        #[test]
+        fn test_case_insensitive() {
+            let input = "push 42\nADD\nPop".to_string();
+            let parsed = split_instructions(&input);
+            assert_eq!(parsed, vec![Instruction::Push(42), Instruction::Add, Instruction::Pop]);
+        }
+
+        #[test]
+        fn test_label_parsing() {
+            let input = "
+                main:
+                PUSH 10
+                SUBS 1
+                JNZ main
+                RET
+            ".to_string();
+            let parsed = split_instructions(&input);
+
+            // The label "main" should be resolved to address "0"
+            if let Instruction::Jnz(target) = &parsed[2] {
+                assert_eq!(target, "0");
+            }
+        }
+
+        #[test]
+        fn test_multiple_instructions() {
+            let input = "PUSH 1\nPUSH 2\nADD\nPUSH 3\nMULT\nRET".to_string();
+            let parsed = split_instructions(&input);
+            assert_eq!(parsed, vec![
+                Instruction::Push(1),
+                Instruction::Push(2),
+                Instruction::Add,
+                Instruction::Push(3),
+                Instruction::Mult,
+                Instruction::Ret
+            ]);
+        }
     }
 }
