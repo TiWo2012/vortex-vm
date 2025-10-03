@@ -11,12 +11,12 @@ A fully-featured **32-bit stack-based virtual machine** written in Rust with com
 - I/O operations (character output)
 - Label-based assembly language
 - Inline comment support
-- Comprehensive test suite (32 tests)
+- Comprehensive test suite (60+ tests)
 - CI/CD pipeline
 
 ---
 
-## 🛠️ Previous Phases (All Completed)
+## 🛠️ Previous Phases (All Completed)5
 
 ### Phase 1 — Core VM Engine ✅
 - [x] Define the VM struct with stack, instruction pointer, and program storage
@@ -88,7 +88,7 @@ A fully-featured **32-bit stack-based virtual machine** written in Rust with com
 
 ## 📊 Project Metrics
 - **Total Instructions:** 20 comprehensive operations
-- **Test Coverage:** 32 tests (100% pass rate)
+- **Test Coverage:** 60+ tests (100% pass rate)
 - **Example Programs:** 8+ demonstration programs
 - **Memory:** 2048 addressable 32-bit locations
 - **Language Features:** Labels, inline comments, case-insensitive parsing
